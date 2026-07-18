@@ -27,11 +27,10 @@ describe('App — 视图路由 + i18n', () => {
     expect(screen.getByText(new RegExp(translate('zh', 'practice.currentCombo')))).toBeInTheDocument()
   })
 
-  it('SettingsBar 图标按钮:切到 DOTA1 后键位锁定 LEGACY', () => {
+  it('SettingsBar 键位按钮:DOTA1 图标(经头像切)后锁定 LEGACY', () => {
     render(<App />)
-    // SettingsBar 的图标按钮文本是 "图标: DOTA2"(精确全名,区别于头像的 toggle label)
-    const iconBtn = screen.getByText(`${translate('zh', 'settings.iconTheme')}: ${translate('zh', 'settings.iconTheme.DOTA2')}`).closest('button')!
-    fireEvent.click(iconBtn)
+    // 经头像切到 DOTA1 图标(图标切换按钮已移除,头像负责切主题)
+    fireEvent.click(screen.getByRole('button', { name: `${translate('zh', 'settings.iconThemeToggle')}: DOTA2` }))
     expect(screen.getByText(new RegExp(translate('zh', 'settings.keybind.lockedLegacy')))).toBeInTheDocument()
   })
 

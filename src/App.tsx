@@ -109,13 +109,6 @@ function SettingsBar({
     <div className="flex gap-2 items-center text-xs">
       <button
         type="button"
-        className="px-2 py-1 rounded border border-white/20 hover:bg-white/10"
-        onClick={() => setSettings({ ...settings, iconTheme: settings.iconTheme === 'DOTA1' ? 'DOTA2' : 'DOTA1' })}
-      >
-        {t('settings.iconTheme')}: {t(`settings.iconTheme.${settings.iconTheme}`)}
-      </button>
-      <button
-        type="button"
         className="px-2 py-1 rounded border border-white/20 hover:bg-white/10 disabled:opacity-40"
         disabled={settings.iconTheme === 'DOTA1'}
         onClick={() =>
