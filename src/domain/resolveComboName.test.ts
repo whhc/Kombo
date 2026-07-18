@@ -1,29 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { resolveComboName, isPresetKey, isAutoName } from './resolveComboName'
-import { t } from './i18n'
+import { resolveComboName, isAutoName } from './resolveComboName'
 import type { TargetCombo } from './types'
 
 describe('resolveComboName — 连招名展示解析', () => {
-  it('isPresetKey: 以 preset. 开头返回 true', () => {
-    expect(isPresetKey('preset.tornadoEmpMeteorBlast')).toBe(true)
-    expect(isPresetKey('我的连招')).toBe(false)
-  })
-
   it('isAutoName: 以 auto. 开头返回 true', () => {
     expect(isAutoName('auto.Tornado.EMP')).toBe(true)
-    expect(isAutoName('preset.tornado')).toBe(false)
     expect(isAutoName('我的连招')).toBe(false)
-  })
-
-  it('resolveComboName: preset key 按语言翻译', () => {
-    const combo: TargetCombo = {
-      comboId: 'c',
-      name: 'preset.tornadoEmpMeteorBlast',
-      spells: [],
-      preCastSlots: {},
-    }
-    expect(resolveComboName(combo, (k) => t('zh', k))).toBe('吹风 → 磁暴 → 陨石 → 推波')
-    expect(resolveComboName(combo, (k) => t('en', k))).toBe('Tornado → EMP → Meteor → Blast')
   })
 
   it('resolveComboName: auto. 名称按 locale+theme 动态拼接', () => {

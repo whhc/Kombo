@@ -47,7 +47,7 @@ export function Dashboard({ sessions, combos, iconTheme, locale, t }: Props) {
           onChange={(e) => setComboId(e.target.value)}
           aria-label="选择连招"
         >
-          <option value="">全部连招</option>
+          <option value="">{t('dashboard.allCombos')}</option>
           {combos.map((c) => (
             <option key={c.comboId} value={c.comboId}>
               {resolveComboName(c, (k) => t(k), locale, iconTheme)}

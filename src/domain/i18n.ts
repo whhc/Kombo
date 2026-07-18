@@ -71,6 +71,7 @@ const UI_ZH: Dict = {
   'dashboard.noRecordInRange': '该时间范围内无记录。',
   'dashboard.rhythmTitle': '按键节奏散点图',
   'dashboard.round': '练习轮次',
+  'dashboard.allCombos': '全部连招',
   'dashboard.notEvaluated': '未评估',
   'dashboard.ratio': '达成率',
   'dashboard.excess': '多切',
@@ -87,11 +88,6 @@ const UI_ZH: Dict = {
   'slot.second': 'F · 第二顺位',
   'slot.empty': '空',
   'orb.emptySlot': '空槽',
-
-  // 预设连拓名(Step 2 接入)
-  'preset.tornadoEmpMeteorBlast': '吹风 → 磁暴 → 陨石 → 推波',
-  'preset.coldsnapForgeBlast': '急冷 → 熔炉 → 推波',
-  'preset.meteorBlastFromZero': '陨石 → 推波(从零开始)',
 }
 
 const UI_EN: Dict = {
@@ -151,6 +147,7 @@ const UI_EN: Dict = {
   'dashboard.noRecordInRange': 'No records in this range.',
   'dashboard.rhythmTitle': 'Keystroke Rhythm Scatter',
   'dashboard.round': 'Round',
+  'dashboard.allCombos': 'All combos',
   'dashboard.notEvaluated': 'Not evaluated',
   'dashboard.ratio': 'ratio',
   'dashboard.excess': 'excess',
@@ -167,10 +164,6 @@ const UI_EN: Dict = {
   'slot.second': 'F · Slot 2',
   'slot.empty': 'Empty',
   'orb.emptySlot': 'Empty',
-
-  'preset.tornadoEmpMeteorBlast': 'Tornado → EMP → Meteor → Blast',
-  'preset.coldsnapForgeBlast': 'Cold Snap → Forge Spirit → Blast',
-  'preset.meteorBlastFromZero': 'Meteor → Blast (from zero)',
 }
 
 // ──────────────────────────────────────────────────────────────

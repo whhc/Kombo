@@ -1,26 +1,25 @@
 import type { TargetCombo } from './types'
 
 /**
- * v1 内置经典连招预设(doc.md §6,issue 04 要求至少 2 条,含吹风磁暴陨石推波)。
- * name 使用 i18n key(以 "preset." 开头),展示时由 resolveComboName 翻译。
+ * v1 内置经典连招预设(doc.md §6)。
+ * name 使用 auto. 前缀与新建连招相同规则(动态按 locale+theme 拼接)。
  */
 export const PRESET_COMBOS: readonly TargetCombo[] = [
   {
     comboId: 'preset-tornado-emp-meteor-blast',
-    name: 'preset.tornadoEmpMeteorBlast',
+    name: 'auto.Tornado.EMP.ChaosMeteor.DeafeningBlast',
     spells: ['Tornado', 'EMP', 'ChaosMeteor', 'DeafeningBlast'],
-    // 实战常见起手:预切吹风+磁暴待发
     preCastSlots: { d: 'Tornado', f: 'EMP' },
   },
   {
     comboId: 'preset-coldsnap-forge-blast',
-    name: 'preset.coldsnapForgeBlast',
+    name: 'auto.ColdSnap.ForgeSpirit.DeafeningBlast',
     spells: ['ColdSnap', 'ForgeSpirit', 'DeafeningBlast'],
     preCastSlots: {},
   },
   {
     comboId: 'preset-meteor-blast-from-zero',
-    name: 'preset.meteorBlastFromZero',
+    name: 'auto.ChaosMeteor.DeafeningBlast',
     spells: ['ChaosMeteor', 'DeafeningBlast'],
     preCastSlots: {},
   },

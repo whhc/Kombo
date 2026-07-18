@@ -6,14 +6,14 @@ import type { TargetCombo } from '../domain/types'
 
 const shortCombo: TargetCombo = {
   comboId: 'short',
-  name: 'preset.tornadoEmpMeteorBlast',
+  name: 'auto.Tornado.EMP',
   spells: ['Tornado', 'EMP'],
   preCastSlots: { d: 'Tornado', f: 'EMP' },
 }
 
 const comboWithPre: TargetCombo = {
   comboId: 'c1',
-  name: 'preset.tornadoEmpMeteorBlast',
+  name: 'auto.Tornado.EMP.ChaosMeteor.DeafeningBlast',
   spells: ['Tornado', 'EMP', 'ChaosMeteor', 'DeafeningBlast'],
   preCastSlots: { d: 'Tornado', f: 'EMP' },
 }
@@ -46,8 +46,9 @@ describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
   it('选中连招后显示连招名(翻译后的预设名)与图标', () => {
     render(<PlayZone combo={shortCombo} scheme={'LEGACY'} {...props} />)
     expect(screen.getByText(new RegExp(tZh('practice.currentCombo')))).toBeInTheDocument()
-    // 预设名应被翻译
-    expect(screen.getByText(/吹风/)).toBeInTheDocument()
+    // auto.Tornado.EMP 在 zh/DOTA2 解析为"强袭飓风 → 电磁脉冲"
+    // auto.Tornado.EMP 解析结果含"强袭飓风"+"电磁脉冲"
+    expect(screen.getByText(/强袭飓风 → 电磁脉冲/)).toBeInTheDocument()
   })
 
   it('预切起手:会话开始时 D/F 槽已挂预切技能(图标 alt)', () => {

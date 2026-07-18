@@ -3,7 +3,7 @@ import type { TargetCombo, SpellName } from '../domain/types'
 import { ALL_SPELLS } from '../domain/spellNames'
 import { SpellIcon } from './SpellIcon'
 import { spellName as spellNameFn } from '../domain/i18n'
-import { isAutoName, isPresetKey } from '../domain/resolveComboName'
+import { isAutoName } from '../domain/resolveComboName'
 import type { Locale } from '../domain/i18n'
 import type { IconTheme } from '../domain/icons'
 
@@ -27,7 +27,7 @@ export function ComboEditor({ initial, iconTheme, locale, t, onSave, onCancel }:
   // 自动命名:spells 变化时若 name 为空或以 auto./preset. 开头,自动填入
   useEffect(() => {
     if (spells.length === 0) return
-    if (name === '' || isAutoName(name) || isPresetKey(name)) {
+    if (name === '' || isAutoName(name)) {
       setName('auto.' + spells.join('.'))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

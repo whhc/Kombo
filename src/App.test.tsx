@@ -17,7 +17,8 @@ describe('App — 视图路由 + i18n', () => {
   it('切到连招库视图能看到预设连招', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'nav.combos') }))
-    expect(screen.getByText(translate('zh', 'preset.tornadoEmpMeteorBlast'))).toBeInTheDocument()
+    // 预设连招名现在用 auto. 前缀动态解析,zh/DOTA2="强袭飓风 → 电磁脉冲 → 混沌陨石 → 超震声波"
+    expect(screen.getByText('强袭飓风 → 电磁脉冲 → 混沌陨石 → 超震声波')).toBeInTheDocument()
   })
 
   it('连招库点练习进入内嵌练习(不切tab,显示Quit按钮)', () => {
@@ -55,6 +56,7 @@ describe('App — 视图路由 + i18n', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.language') }))
     fireEvent.click(screen.getByRole('button', { name: translate('en', 'nav.combos') }))
-    expect(screen.getByText(translate('en', 'preset.tornadoEmpMeteorBlast'))).toBeInTheDocument()
+    // en/DOTA2="Tornado → EMP → Chaos Meteor → Deafening Blast"
+    expect(screen.getByText('Tornado → EMP → Chaos Meteor → Deafening Blast')).toBeInTheDocument()
   })
 })
