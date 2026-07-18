@@ -19,6 +19,7 @@ const UI_ZH: Dict = {
   'nav.dashboard': '复盘',
 
   'settings.iconTheme': '图标',
+  'settings.iconThemeToggle': '切换图标主题(当前)',
   'settings.keybind': '键位',
   'settings.keybind.lockedLegacy': '(锁定 LEGACY)',
   'settings.language': '语言',
@@ -34,6 +35,8 @@ const UI_ZH: Dict = {
   'practice.failed': '✗ 失败(有跑偏步骤)',
   'practice.endAndSave': '结束并保存',
   'practice.again': '再练一次',
+  'practice.pauseLoop': '暂停循环',
+  'practice.autoNext': '0.5s 后自动开始下一轮…',
 
   'combo.library': '连招库',
   'combo.new': '新建连招',
@@ -91,6 +94,7 @@ const UI_EN: Dict = {
   'nav.dashboard': 'Review',
 
   'settings.iconTheme': 'Icon',
+  'settings.iconThemeToggle': 'Toggle icon theme (current)',
   'settings.keybind': 'Keys',
   'settings.keybind.lockedLegacy': '(LEGACY locked)',
   'settings.language': 'Lang',
@@ -106,6 +110,8 @@ const UI_EN: Dict = {
   'practice.failed': '✗ Failed (off-track step)',
   'practice.endAndSave': 'End & Save',
   'practice.again': 'Try again',
+  'practice.pauseLoop': 'Pause loop',
+  'practice.autoNext': 'Next round in 0.5s…',
 
   'combo.library': 'Combo Library',
   'combo.new': 'New combo',

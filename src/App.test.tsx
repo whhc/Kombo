@@ -27,10 +27,11 @@ describe('App — 视图路由 + i18n', () => {
     expect(screen.getByText(new RegExp(translate('zh', 'practice.currentCombo')))).toBeInTheDocument()
   })
 
-  it('SettingsBar: DOTA1 图标时键位锁定 LEGACY', () => {
+  it('SettingsBar 图标按钮:切到 DOTA1 后键位锁定 LEGACY', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(translate('zh', 'settings.iconTheme')) }))
-    // 切到 DOTA1 图标后显示锁定提示
+    // SettingsBar 的图标按钮文本是 "图标: DOTA2"(精确全名,区别于头像的 toggle label)
+    const iconBtn = screen.getByText(`${translate('zh', 'settings.iconTheme')}: ${translate('zh', 'settings.iconTheme.DOTA2')}`).closest('button')!
+    fireEvent.click(iconBtn)
     expect(screen.getByText(new RegExp(translate('zh', 'settings.keybind.lockedLegacy')))).toBeInTheDocument()
   })
 
@@ -50,5 +51,16 @@ describe('App — 视图路由 + i18n', () => {
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.language') }))
     fireEvent.click(screen.getByRole('button', { name: translate('en', 'nav.combos') }))
     expect(screen.getByText(translate('en', 'preset.tornadoEmpMeteorBlast'))).toBeInTheDocument()
+  })
+
+  it('点击卡尔头像切换图标主题(DOTA2→DOTA1),且 DOTA1 时键位锁 LEGACY', () => {
+    render(<App />)
+    // 默认 DOTA2,头像 aria-label 含 DOTA2(用独立 toggle label 区分 SettingsBar)
+    const heroBtn = screen.getByRole('button', { name: `${translate('zh', 'settings.iconThemeToggle')}: DOTA2` })
+    fireEvent.click(heroBtn)
+    // 切到 DOTA1:头像标签变 DOTA1,SettingsBar 图标标签也变 DOTA1
+    expect(screen.getByRole('button', { name: `${translate('zh', 'settings.iconThemeToggle')}: DOTA1` })).toBeInTheDocument()
+    // DOTA1 图标 → 键位锁定 LEGACY
+    expect(screen.getByText(new RegExp(translate('zh', 'settings.keybind.lockedLegacy')))).toBeInTheDocument()
   })
 })

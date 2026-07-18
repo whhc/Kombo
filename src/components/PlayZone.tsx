@@ -25,6 +25,7 @@ interface Props {
 export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
   const [invoker, setInvoker] = useState<InvokerState>({ orbs: [], slots: [null, null] })
   const [session, setSession] = useState<SessionState | null>(null)
+  const [loopPaused, setLoopPaused] = useState(false)
   const [lastTs, setLastTs] = useState(0)
   const [lastCast, setLastCast] = useState<{ type: 'CAST' | 'MISS_CAST'; spell: SpellName | null } | null>(null)
   const [finished, setFinished] = useState<{ status: 'SUCCESS' | 'FAILED'; metrics: SessionMetrics } | null>(null)
@@ -34,14 +35,29 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
       setSession(null)
       setInvoker({ orbs: [], slots: [null, null] })
       setFinished(null)
+      setLoopPaused(false)
       return
     }
-    setSession(createSession(combo))
-    setInvoker(createInitialInvokerState(combo))
+    resetRound(combo)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [combo])
+
+  /** 重置一轮:新会话 + 应用预切 + 清状态 */
+  function resetRound(c: TargetCombo) {
+    setSession(createSession(c))
+    setInvoker(createInitialInvokerState(c))
     setLastTs(0)
     setLastCast(null)
     setFinished(null)
-  }, [combo])
+  }
+
+  // 自动循环:完成后未暂停,0.5s 后自动开始下一轮
+  useEffect(() => {
+    if (!finished || loopPaused || !combo) return
+    const timer = setTimeout(() => resetRound(combo), 500)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished, loopPaused, combo])
 
   useEffect(() => {
     if (!combo || !session || finished) return
@@ -106,19 +122,27 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
             {finished.status === 'SUCCESS' ? t('practice.success') : t('practice.failed')}
           </span>
           <MetricsPanel metrics={finished.metrics} t={t} />
-          <button
-            type="button"
-            className="px-3 py-1 text-sm rounded bg-sky-600 hover:bg-sky-500"
-            onClick={() => {
-              setSession(createSession(combo))
-              setInvoker(createInitialInvokerState(combo))
-              setLastTs(0)
-              setLastCast(null)
-              setFinished(null)
-            }}
-          >
-            {t('practice.again')}
-          </button>
+          {loopPaused ? (
+            // 暂停循环:手动"再练一次"
+            <button
+              type="button"
+              className="px-3 py-1 text-sm rounded bg-sky-600 hover:bg-sky-500"
+              onClick={() => combo && resetRound(combo)}
+            >
+              {t('practice.again')}
+            </button>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-xs text-neutral-400">{t('practice.autoNext')}</span>
+              <button
+                type="button"
+                className="px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10"
+                onClick={() => setLoopPaused(true)}
+              >
+                {t('practice.pauseLoop')}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={endSession}>

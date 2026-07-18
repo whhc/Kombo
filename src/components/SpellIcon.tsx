@@ -18,7 +18,7 @@ export function SpellIcon({ spell, tooltipName, size = 40, className, theme = 'D
       title={tooltipName}
       width={size}
       height={size}
-      className={`rounded ${className ?? ''}`}
+      className={`rounded object-cover ${className ?? ''}`}
       loading="lazy"
     />
   )
