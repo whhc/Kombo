@@ -41,3 +41,26 @@ export interface TargetCombo {
   /** 预切起手槽位,可空(空=从零开始练);约束:必须是 spells 前缀 */
   preCastSlots: { d?: SpellName; f?: SpellName }
 }
+
+/** 三维评估结果(Issue 06 实现,此处占位) */
+export interface SessionMetrics {
+  // 维度①:SUCCESS/FAILED(已在 session.status 里)
+  // 维度②:切球达成率
+  optimalOrbSwitches: number | null
+  actualOrbSwitches: number
+  orbRatio: number | null // 0..1,null=FAILED 轮次 N/A
+  excessOrbSwitches: number
+  // 维度③:时长
+  durationMs: number
+}
+
+/** 单次连招练习会话(doc.md §4.1 ExecutionSession) */
+export interface ExecutionSession {
+  sessionId: string
+  comboId: string
+  status: 'SUCCESS' | 'FAILED'
+  actions: ActionNode[]
+  startTime: number
+  endTime: number
+  metrics: SessionMetrics | null // Issue 06 填充;未评估时为 null
+}

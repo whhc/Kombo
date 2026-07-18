@@ -35,7 +35,7 @@ function App() {
         </nav>
       </header>
 
-      {view === 'practice' && <PlayZone activeComboName={activeCombo?.name} scheme={scheme} />}
+      {view === 'practice' && <PlayZone combo={activeCombo} scheme={scheme} />}
 
       {view === 'combos' && (
         <ComboManager
