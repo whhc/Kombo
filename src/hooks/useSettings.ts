@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { DEFAULT_SETTINGS, effectiveScheme, type UserSettings } from '../domain/settings'
 
 const STORAGE_KEY = 'kombo.settings'
@@ -14,22 +14,34 @@ function load(): UserSettings {
       }
     }
   } catch {
-    // 忽略损坏数据,回退默认
+    // 忽略
   }
   return DEFAULT_SETTINGS
 }
 
-/** UserSettings 状态 + 持久化到 localStorage */
-export function useSettings() {
-  const [settings, setSettings] = useState<UserSettings>(load)
+/** 同步写入,避免 Tauri 退出时 effect 未 flush 导致设置丢失 */
+function save(s: UserSettings): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
+  } catch {
+    // 忽略
+  }
+}
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-    } catch {
-      // 忽略写入失败(隐私模式等)
-    }
-  }, [settings])
+/**
+ * UserSettings 状态 + 同步持久化到 localStorage。
+ * 设置变更时立即写入,下次打开无需重新设置。
+ */
+export function useSettings() {
+  const [settings, setSettingsState] = useState<UserSettings>(load)
+
+  const setSettings = useCallback((next: UserSettings | ((prev: UserSettings) => UserSettings)) => {
+    setSettingsState((prev) => {
+      const resolved = typeof next === 'function' ? next(prev) : next
+      save(resolved) // 同步落盘,不依赖 effect
+      return resolved
+    })
+  }, [])
 
   return { settings, setSettings, scheme: effectiveScheme(settings) }
 }
