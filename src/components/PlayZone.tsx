@@ -77,7 +77,7 @@ export function PlayZone({ combo, scheme, locale, t }: Props) {
     <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
       <p className="text-amber-300 text-sm">{t('practice.currentCombo')}: {resolveComboName(combo, t)}</p>
       <OrbDisplay orbs={invoker.orbs} locale={locale} t={t} />
-      <SlotDisplay slots={invoker.slots} locale={locale} t={t} />
+      <SlotDisplay slots={invoker.slots} scheme={scheme} locale={locale} t={t} />
       <ProgressBar combo={combo} progress={session?.progress ?? 0} failedSteps={session?.failedSteps ?? []} locale={locale} t={t} />
 
       <div className="text-sm h-6">

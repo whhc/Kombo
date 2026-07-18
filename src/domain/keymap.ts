@@ -32,6 +32,21 @@ const DOTA2_SLOT_KEY: ReadonlyMap<Key, 0 | 1> = new Map<Key, 0 | 1>([
   ['F', 1],
 ])
 
+/** 反查:技能 → 其 LEGACY 传统专属键 */
+export function legacyKeyOf(spell: SpellName): Key {
+  return LEGACY_KEYMAP[spell]
+}
+
+/**
+ * 槽位释放键标签:用于 UI 显示该槽位按哪个键释放。
+ * - DOTA2:第一槽固定 D,第二槽固定 F(与槽位技能无关)
+ * - LEGACY:显示该槽位技能的传统专属键(如 Tornado→X);槽空时返回 null
+ */
+export function slotReleaseKey(scheme: KeybindScheme, slotIndex: 0 | 1, spell: SpellName | null): Key | null {
+  if (scheme === 'DOTA2') return slotIndex === 0 ? 'D' : 'F'
+  return spell === null ? null : legacyKeyOf(spell)
+}
+
 /** 给定方案与键,返回"要释放哪个技能 / 哪个槽位";非释放键返回 null。 */
 export function resolveCastKey(
   key: Key,
