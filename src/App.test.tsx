@@ -30,4 +30,14 @@ describe('App — 端到端按键 → 元素球更新', () => {
     fireEvent.keyDown(window, { key: 'q' })
     expect(screen.queryAllByLabelText('空槽')).toHaveLength(0)
   })
+
+  it('切 Q Q Q 后按 R,ColdSnap 进入第一槽位', () => {
+    render(<App />)
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'r' })
+    expect(screen.getByLabelText(/槽位 D · 第一顺位: ColdSnap/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/槽位 F · 第二顺位: 空/)).toBeInTheDocument()
+  })
 })
