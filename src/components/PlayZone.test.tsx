@@ -30,17 +30,22 @@ describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
     expect(screen.queryByRole('button', { name: tZh('practice.endAndSave') })).not.toBeInTheDocument()
   })
 
-  it('内嵌模式(onQuit 存在):显示 Quit 按钮,不自动保存不循环', () => {
+  it('内嵌模式(onQuit 存在):显示 Quit 按钮,释放全部后自动保存显示结果', () => {
     const onQuit = vi.fn()
-    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} onQuit={onQuit} {...props} />)
-    // 有 Quit 按钮
-    expect(screen.getByRole('button', { name: tZh('practice.quit') })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: tZh('practice.endAndSave') })).not.toBeInTheDocument()
-    // 释放全部技能后不应自动结束(内嵌模式不保存)
-    fireEvent.keyDown(window, { key: 'x' })
-    fireEvent.keyDown(window, { key: 'c' })
-    // 没有显示 SUCCESS/FAILED,因为不自动结束
-    expect(screen.queryByText(tZh('practice.success'))).not.toBeInTheDocument()
+    vi.useFakeTimers()
+    try {
+      render(<PlayZone combo={shortCombo} scheme={'LEGACY'} onQuit={onQuit} {...props} />)
+      // 有 Quit 按钮(练习中可随时退出)
+      expect(screen.getByRole('button', { name: tZh('practice.quit') })).toBeInTheDocument()
+      // 释放全部技能 → 自动结束保存,显示 SUCCESS
+      fireEvent.keyDown(window, { key: 'x' })
+      fireEvent.keyDown(window, { key: 'c' })
+      expect(screen.getByText(tZh('practice.success'))).toBeInTheDocument()
+      // Quit 按钮在完成态仍可见
+      expect(screen.getByRole('button', { name: tZh('practice.quit') })).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('选中连招后显示连招名(翻译后的预设名)与图标', () => {

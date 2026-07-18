@@ -61,18 +61,18 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit }: Props)
     setFinished(null)
   }
 
-  // 自动循环(仅独立模式:有combo,无onQuit,有finished,未暂停)
+  // 自动循环(独立/内嵌模式均适用)
   useEffect(() => {
-    if (!combo || onQuit) return
+    if (!combo) return
     if (!finished || loopPaused || !combo) return
     const timer = setTimeout(() => resetRound(combo), 500)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finished, loopPaused, combo, onQuit])
+  }, [finished, loopPaused, combo])
 
-  // 自动保存(仅独立模式:combo且无onQuit,且completed)
+  // 自动保存(独立/内嵌模式均适用,completed 时触发)
   const endSession = () => {
-    if (!combo || !session || onQuit) return
+    if (!combo || !session) return
     const result = finishSession(session, combo, Date.now())
     const metrics = evaluateSession(result, combo)
     const withMetrics = { ...result, metrics }
@@ -81,14 +81,13 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit }: Props)
   }
 
   useEffect(() => {
-    if (!combo || onQuit) return
+    if (!combo) return
     if (session?.completed && !finished) endSession()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.completed, finished, combo, onQuit])
+  }, [session?.completed, finished, combo])
 
   useEffect(() => {
-    // finished 时停止按键:独立模式显示结果后不可操作;内嵌模式 finished 永为 null 不收影响
-    if (finished && !onQuit) return
+    if (finished) return
 
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toUpperCase()
@@ -162,37 +161,38 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit }: Props)
 
       <SpellHistory spells={spellHistory} theme={iconTheme} locale={locale} />
 
-      {showQuit ? (
-        <button
-          type="button"
-          className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10"
-          onClick={onQuit}
-        >
-          {t('practice.quit')}
-        </button>
-      ) : finished ? (
+      {finished ? (
         <div className="flex flex-col items-center gap-3">
           <span className={finished.status === 'SUCCESS' ? 'text-emerald-400 font-bold text-lg' : 'text-rose-400 font-bold text-lg'}>
             {finished.status === 'SUCCESS' ? t('practice.success') : t('practice.failed')}
           </span>
           <MetricsPanel metrics={finished.metrics} t={t} />
           {loopPaused ? (
-            <button type="button" className="px-3 py-1 text-sm rounded bg-sky-600 hover:bg-sky-500" onClick={() => combo && resetRound(combo)}>
-              {t('practice.again')}
-            </button>
+            <div className="flex gap-2">
+              <button type="button" className="px-3 py-1 text-sm rounded bg-sky-600 hover:bg-sky-500" onClick={() => combo && resetRound(combo)}>
+                {t('practice.again')}
+              </button>
+              {showQuit && <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={onQuit}>{t('practice.quit')}</button>}
+            </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <span className="text-xs text-neutral-400">{t('practice.autoNext')}</span>
-              <button type="button" className="px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setLoopPaused(true)}>
-                {t('practice.pauseLoop')}
-              </button>
+              <div className="flex gap-2">
+                <button type="button" className="px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setLoopPaused(true)}>
+                  {t('practice.pauseLoop')}
+                </button>
+                {showQuit && <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={onQuit}>{t('practice.quit')}</button>}
+              </div>
             </div>
           )}
         </div>
       ) : (
-        <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={endSession}>
-          {t('practice.endAndSave')}
-        </button>
+        <div className="flex gap-2">
+          <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={endSession}>
+            {t('practice.endAndSave')}
+          </button>
+          {showQuit && <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={onQuit}>{t('practice.quit')}</button>}
+        </div>
       )}
     </div>
   )
