@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { TargetCombo, SpellName } from '../domain/types'
 import { ALL_SPELLS } from '../domain/spellNames'
 import { SpellIcon } from './SpellIcon'
 import { spellName as spellNameFn } from '../domain/i18n'
+import { isAutoName, isPresetKey } from '../domain/resolveComboName'
 import type { Locale } from '../domain/i18n'
 import type { IconTheme } from '../domain/icons'
 
@@ -15,12 +16,22 @@ interface Props {
   onCancel: () => void
 }
 
-/** 连招编辑器:命名 + 选技能成序列 + 可选预切前缀 + 保存 */
+/** 连招编辑器:命名 + 选技能成序列 + 可选预切前缀 + 保存。
+ *  skills 变化时若名称为空(或 auto. 前缀),自动生成为 "auto.Spell1.Spell2…"。 */
 export function ComboEditor({ initial, iconTheme, locale, t, onSave, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? '')
   const [spells, setSpells] = useState<SpellName[]>(initial?.spells ?? [])
   const [preD, setPreD] = useState<SpellName | ''>(initial?.preCastSlots.d ?? '')
   const [preF, setPreF] = useState<SpellName | ''>(initial?.preCastSlots.f ?? '')
+
+  // 自动命名:spells 变化时若 name 为空或以 auto./preset. 开头,自动填入
+  useEffect(() => {
+    if (spells.length === 0) return
+    if (name === '' || isAutoName(name) || isPresetKey(name)) {
+      setName('auto.' + spells.join('.'))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spells])
 
   const addSpell = (s: SpellName) => setSpells((prev) => [...prev, s])
   const removeSpellAt = (i: number) => setSpells((prev) => prev.filter((_, idx) => idx !== i))

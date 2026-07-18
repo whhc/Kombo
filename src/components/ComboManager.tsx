@@ -80,7 +80,7 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
             className="flex items-center justify-between p-3 rounded bg-neutral-800 border border-white/10"
           >
             <div className="flex flex-col gap-1">
-              <span className="font-medium">{resolveComboName(c, t)}</span>
+              <span className="font-medium">{resolveComboName(c, t, locale, iconTheme)}</span>
               <span className="flex items-center gap-1 text-xs text-neutral-400">
                 {c.spells.map((s, i) => (
                   <SpellIcon key={i} spell={s} tooltipName={spellNameFn(locale, iconTheme, s)} size={20} theme={iconTheme} className="opacity-80" />
