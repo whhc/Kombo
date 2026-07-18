@@ -39,12 +39,32 @@ describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
     expect(screen.getByRole('img', { name: '电磁脉冲' })).toBeInTheDocument()
   })
 
-  it('LEGACY: 按释放键正确推进进度,全释放后可结束会话标 SUCCESS', () => {
+  it('LEGACY: 按释放键正确推进进度(未全部释放时仍可手动结束)', () => {
     render(<PlayZone combo={shortCombo} scheme={'LEGACY'} {...props} />)
-    fireEvent.keyDown(window, { key: 'x' })
-    fireEvent.keyDown(window, { key: 'c' })
+    fireEvent.keyDown(window, { key: 'x' }) // 只放 1 个,未完成
     fireEvent.click(screen.getByRole('button', { name: tZh('practice.endAndSave') }))
+    // 手动结束后,因未完成全部目标 → FAILED
+    expect(screen.getByText(tZh('practice.failed'))).toBeInTheDocument()
+  })
+
+  it('全部目标技能按序释放完毕后自动结束保存(无需手动点按钮)', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} {...props} />)
+    fireEvent.keyDown(window, { key: 'x' }) // Tornado
+    // 只放了 1 个,还没完成,应仍可按键、有"结束并保存"按钮
+    expect(screen.getByRole('button', { name: tZh('practice.endAndSave') })).toBeInTheDocument()
+    fireEvent.keyDown(window, { key: 'c' }) // EMP —— 全部释放完
+    // 应自动进入完成态,显示成功 + "再练一次"(无需手动点结束)
     expect(screen.getByText(tZh('practice.success'))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: tZh('practice.again') })).toBeInTheDocument()
+  })
+
+  it('全部释放完但中途有错序(宽松)→ 自动结束保存为 FAILED', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} {...props} />)
+    fireEvent.keyDown(window, { key: 'c' }) // EMP 错序(目标第1是 Tornado)→ failedStep
+    fireEvent.keyDown(window, { key: 'x' }) // Tornado → progress 1
+    fireEvent.keyDown(window, { key: 'c' }) // EMP → progress 2 → 完成
+    // 自动结束,但有 failedStep → FAILED
+    expect(screen.getByText(tZh('practice.failed'))).toBeInTheDocument()
   })
 
   it('宽松继续:释放非目标技能不中断,进度条标红', () => {
@@ -57,11 +77,10 @@ describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
     expect(screen.getByRole('button', { name: tZh('practice.endAndSave') })).toBeInTheDocument()
   })
 
-  it('结束后点"再练一次"重置会话', () => {
+  it('自动结束后点"再练一次"重置会话', () => {
     render(<PlayZone combo={shortCombo} scheme={'LEGACY'} {...props} />)
     fireEvent.keyDown(window, { key: 'x' })
-    fireEvent.keyDown(window, { key: 'c' })
-    fireEvent.click(screen.getByRole('button', { name: tZh('practice.endAndSave') }))
+    fireEvent.keyDown(window, { key: 'c' }) // 全释放 → 自动结束
     fireEvent.click(screen.getByRole('button', { name: tZh('practice.again') }))
     expect(screen.getByRole('button', { name: tZh('practice.endAndSave') })).toBeInTheDocument()
   })

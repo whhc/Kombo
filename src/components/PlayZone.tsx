@@ -71,6 +71,15 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
     setFinished({ status: result.status, metrics })
   }
 
+  // 自动保存:目标技能全部按序释放完毕(progress 达 spells.length)时自动结束会话
+  useEffect(() => {
+    if (session?.completed && !finished) {
+      endSession()
+    }
+    // endSession 依赖 session/combo,但 completed 变化才需触发;lint 允许只盯关键状态
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.completed, finished])
+
   if (!combo) {
     return <p className="text-neutral-400 text-sm">{t('practice.guide')}</p>
   }
