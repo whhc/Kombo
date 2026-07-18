@@ -26,14 +26,8 @@ export function useCombos() {
   return { combos, addOrUpdate, remove }
 }
 
-/** 确保所有预设已在存储中,然后返回当前全部连招 */
+/** 将预设按 comboId 强制写入存储(覆盖旧名),然后返回全部连招 */
 function seedAndGet(): TargetCombo[] {
-  const existing = listCombos(localStorageBackend)
-  const existingIds = new Set(existing.map((c) => c.comboId))
-  const missing = PRESET_COMBOS.filter((p) => !existingIds.has(p.comboId))
-  if (missing.length > 0) {
-    for (const p of missing) saveCombo(localStorageBackend, p)
-    return listCombos(localStorageBackend)
-  }
-  return existing
+  for (const p of PRESET_COMBOS) saveCombo(localStorageBackend, p)
+  return listCombos(localStorageBackend)
 }
