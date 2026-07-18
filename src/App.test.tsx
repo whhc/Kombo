@@ -40,4 +40,31 @@ describe('App — 端到端按键 → 元素球更新', () => {
     expect(screen.getByLabelText(/槽位 D · 第一顺位: ColdSnap/)).toBeInTheDocument()
     expect(screen.getByLabelText(/槽位 F · 第二顺位: 空/)).toBeInTheDocument()
   })
+
+  it('LEGACY 模式切 Tornado 后按 X 释放,出现释放记录', () => {
+    render(<App />)
+    // 默认 DOTA2 键位,点按钮切到 LEGACY
+    fireEvent.click(screen.getByRole('button', { name: /键位: DOTA2/ }))
+    // 现在是 LEGACY
+    // 切 W W Q R 出 Tornado
+    fireEvent.keyDown(window, { key: 'w' })
+    fireEvent.keyDown(window, { key: 'w' })
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'r' })
+    // 按 X 释放(Tornado 的 LEGACY 专属键)
+    fireEvent.keyDown(window, { key: 'x' })
+    expect(screen.getByText(/释放: Tornado/)).toBeInTheDocument()
+  })
+
+  it('DOTA2 模式按 D 释放第一槽位技能', () => {
+    render(<App />)
+    // 默认就是 DOTA2
+    // 切 Q Q Q R 出 ColdSnap 到第一槽
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'r' })
+    fireEvent.keyDown(window, { key: 'd' })
+    expect(screen.getByText(/释放: ColdSnap/)).toBeInTheDocument()
+  })
 })
