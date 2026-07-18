@@ -25,3 +25,4 @@ dist-ssr
 
 # ZCode plan mode artifacts
 .zcode/
+src-tauri/target/
