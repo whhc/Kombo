@@ -11,10 +11,11 @@ describe('SpellIcon — 技能图标组件', () => {
     expect(img.getAttribute('title')).toBe('强袭飓风')
   })
 
-  it('指定 size 时应用到宽高', () => {
+  it('指定 size 时应用到 CSS 宽高(style,保证 object-cover 对齐)', () => {
     render(<SpellIcon spell="Tornado" tooltipName="Tornado" size={48} />)
     const img = screen.getByRole('img')
-    expect(img.getAttribute('width')).toBe('48')
-    expect(img.getAttribute('height')).toBe('48')
+    // 用 style 而非 HTML width/height 属性,确保 object-cover 在不同比例资源下生效
+    expect(img.style.width).toBe('48px')
+    expect(img.style.height).toBe('48px')
   })
 })

@@ -11,7 +11,8 @@ interface Props {
   onClick?: () => void
 }
 
-/** 卡尔英雄头像。可点击切换 dota1/dota2 图标主题。dota1 方框,dota2 圆形 */
+/** 卡尔英雄头像。可点击切换 dota1/dota2 图标主题。dota1 方框,dota2 圆形。
+ *  用 CSS 显式 width/height + object-cover 保证不同比例资源裁剪对齐。 */
 export function HeroIcon({ theme = 'DOTA2', locale, size = 48, className, onClick }: Props) {
   const shape = theme === 'DOTA1' ? 'rounded-md border-2 border-amber-500/50' : 'rounded-full border-2 border-amber-500/50'
   const clickable = onClick !== undefined
@@ -22,14 +23,14 @@ export function HeroIcon({ theme = 'DOTA2', locale, size = 48, className, onClic
       disabled={!clickable}
       aria-label={`${t(locale, 'settings.iconThemeToggle')}: ${theme}`}
       title={`${t(locale, 'settings.iconThemeToggle')}: ${theme}`}
-      className={`inline-flex ${clickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${className ?? ''}`}
+      className={`inline-flex items-center justify-center overflow-hidden ${clickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${shape} ${className ?? ''}`}
+      style={{ width: size, height: size }}
     >
       <img
         src={heroIconUrl(theme)}
         alt={t(locale, 'app.title')}
-        width={size}
-        height={size}
-        className={`${shape} object-cover`}
+        className="object-cover"
+        style={{ width: size, height: size }}
       />
     </button>
   )
