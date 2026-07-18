@@ -31,3 +31,13 @@ export interface ActionNode {
   /** 距上次操作的间隔(毫秒) */
   timeSinceLastMs: number
 }
+
+/** 目标连招(doc.md §4.1 TargetCombo) */
+export interface TargetCombo {
+  comboId: string
+  name: string
+  /** 有序技能序列,允许重复 */
+  spells: SpellName[]
+  /** 预切起手槽位,可空(空=从零开始练);约束:必须是 spells 前缀 */
+  preCastSlots: { d?: SpellName; f?: SpellName }
+}

@@ -67,4 +67,19 @@ describe('App — 端到端按键 → 元素球更新', () => {
     fireEvent.keyDown(window, { key: 'd' })
     expect(screen.getByText(/释放: ColdSnap/)).toBeInTheDocument()
   })
+
+  it('切到连招库视图能看到预设连招(含吹风磁暴陨石推波)', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: '连招库' }))
+    expect(screen.getByText('吹风 → 磁暴 → 陨石 → 推波')).toBeInTheDocument()
+  })
+
+  it('连招库点练习回到练习视图并显示连招名', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: '连招库' }))
+    // 连招列表里第一条的"练习"按钮(导航的"练习"按钮在前,[0]是导航,[1+]是列表项)
+    const practiceButtons = screen.getAllByRole('button', { name: '练习' })
+    fireEvent.click(practiceButtons[1])
+    expect(screen.getByText(/当前连招/)).toBeInTheDocument()
+  })
 })

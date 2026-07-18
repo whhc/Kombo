@@ -1,51 +1,53 @@
-import { useEffect, useState } from 'react'
-import { OrbDisplay } from './components/OrbDisplay'
-import { SlotDisplay } from './components/SlotDisplay'
-import { handleInvokerKey, type InvokerState } from './domain/invokerEngine'
-import type { SpellName } from './domain/types'
+import { useState } from 'react'
+import { PlayZone } from './components/PlayZone'
+import { ComboManager } from './components/ComboManager'
 import { useSettings } from './hooks/useSettings'
+import { useCombos } from './hooks/useCombos'
+import type { TargetCombo } from './domain/types'
 
-const INITIAL: InvokerState = { orbs: [], slots: [null, null] }
+type View = 'practice' | 'combos'
 
 function App() {
   const { settings, setSettings, scheme } = useSettings()
-  const [state, setState] = useState<InvokerState>(INITIAL)
-  const [lastTs, setLastTs] = useState(0)
-  const [lastCast, setLastCast] = useState<{ type: 'CAST' | 'MISS_CAST'; spell: SpellName | null } | null>(null)
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toUpperCase()
-      const now = performance.now()
-      const result = handleInvokerKey(state, key, now, lastTs, scheme)
-      if (result.action) {
-        setState(result.state)
-        setLastTs(now)
-        if (result.action.actionType === 'CAST' || result.action.actionType === 'MISS_CAST') {
-          setLastCast({ type: result.action.actionType, spell: result.action.spellName ?? null })
-        }
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [state, lastTs, scheme])
+  const { combos, addOrUpdate, remove } = useCombos()
+  const [view, setView] = useState<View>('practice')
+  const [activeCombo, setActiveCombo] = useState<TargetCombo | null>(null)
 
   return (
-    <div className="h-full w-full bg-neutral-950 text-neutral-100 flex flex-col items-center justify-center gap-8">
-      <h1 className="text-2xl font-bold">Kombo — 卡尔连招模拟器</h1>
-      <p className="text-neutral-400 text-sm">Q / W / E 切球 · R 祈唤 · 释放键释放</p>
+    <div className="h-full w-full bg-neutral-950 text-neutral-100 flex flex-col items-center gap-6 py-8">
+      <header className="flex flex-col items-center gap-3">
+        <h1 className="text-2xl font-bold">Kombo — 卡尔连招模拟器</h1>
+        <nav className="flex gap-2 text-sm">
+          <button
+            type="button"
+            className={`px-3 py-1 rounded border ${view === 'practice' ? 'bg-white/15 border-white/30' : 'border-white/15 hover:bg-white/5'}`}
+            onClick={() => setView('practice')}
+          >
+            练习
+          </button>
+          <button
+            type="button"
+            className={`px-3 py-1 rounded border ${view === 'combos' ? 'bg-white/15 border-white/30' : 'border-white/15 hover:bg-white/5'}`}
+            onClick={() => setView('combos')}
+          >
+            连招库
+          </button>
+        </nav>
+      </header>
 
-      <OrbDisplay orbs={state.orbs} />
-      <SlotDisplay slots={state.slots} />
+      {view === 'practice' && <PlayZone activeComboName={activeCombo?.name} scheme={scheme} />}
 
-      <div className="text-sm h-6">
-        {lastCast && (
-          <span className={lastCast.type === 'CAST' ? 'text-emerald-400' : 'text-rose-400'}>
-            {lastCast.type === 'CAST' ? '释放' : '空放'}
-            {lastCast.spell ? `: ${lastCast.spell}` : ''}
-          </span>
-        )}
-      </div>
+      {view === 'combos' && (
+        <ComboManager
+          combos={combos}
+          onSave={addOrUpdate}
+          onDelete={remove}
+          onSelect={(c) => {
+            setActiveCombo(c)
+            setView('practice')
+          }}
+        />
+      )}
 
       <SettingsBar settings={settings} setSettings={setSettings} />
     </div>
@@ -71,7 +73,6 @@ function SettingsBar({
       <button
         type="button"
         className="px-2 py-1 rounded border border-white/20 hover:bg-white/10 disabled:opacity-40"
-        // DOTA1 图标下键位方案强制 LEGACY,不允许切;只在 DOTA2 图标下可切
         disabled={settings.iconTheme === 'DOTA1'}
         onClick={() =>
           setSettings({
