@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { t, LOCALES, DEFAULT_LOCALE, type Locale } from './i18n'
+import { t, spellName, LOCALES, DEFAULT_LOCALE, type Locale } from './i18n'
 
 describe('i18n — 轻量翻译字典', () => {
   it('LOCALES 含 zh 与 en,默认 zh', () => {
@@ -13,9 +13,9 @@ describe('i18n — 轻量翻译字典', () => {
     expect(t('en', 'nav.practice')).toBe('Practice')
   })
 
-  it('t: 技能名随语言切换(zh 中文 / en 英文)', () => {
-    expect(t('zh', 'spell.Tornado')).toBe('强袭飓风')
-    expect(t('en', 'spell.Tornado')).toBe('Tornado')
+  it('spellName: 技能名随语言+主题切换(走专项函数,非扁平 key)', () => {
+    expect(spellName('zh', 'DOTA2', 'Tornado')).toBe('强袭飓风')
+    expect(spellName('en', 'DOTA2', 'Tornado')).toBe('Tornado')
   })
 
   it('t: 元素名随语言切换', () => {
@@ -41,7 +41,6 @@ function keyList(locale: Locale): Record<string, string> {
   const probes = [
     'nav.practice', 'nav.combos', 'nav.dashboard',
     'common.save', 'common.cancel',
-    'spell.Tornado', 'spell.ColdSnap', 'spell.EMP',
     'element.Q', 'element.W', 'element.E',
   ]
   const out: Record<string, string> = {}

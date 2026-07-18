@@ -45,13 +45,13 @@ function Slot({
     scheme === 'DOTA2'
       ? `${releaseKey} · ${index === 0 ? t('slot.first').split(' · ')[1] : t('slot.second').split(' · ')[1]}`
       : spell
-        ? `${releaseKey} · ${spellNameFn(locale, spell)}`
+        ? `${releaseKey} · ${spellNameFn(locale, theme, spell)}`
         : t('slot.empty')
 
   return (
     <div className="flex flex-col items-center gap-1">
       {spell ? (
-        <SpellIcon spell={spell} tooltipName={spellNameFn(locale, spell)} size={56} theme={theme} />
+        <SpellIcon spell={spell} tooltipName={spellNameFn(locale, theme, spell)} size={56} theme={theme} />
       ) : (
         <div
           className="h-14 w-14 rounded-lg border-2 border-dashed border-white/15 bg-white/5 flex items-center justify-center text-neutral-600 text-xl"

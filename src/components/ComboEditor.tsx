@@ -64,17 +64,17 @@ export function ComboEditor({ initial, iconTheme, locale, t, onSave, onCancel }:
               key={s}
               type="button"
               className="flex flex-col items-center hover:bg-white/10 rounded p-1"
-              aria-label={`${t('combo.addSpell')} ${spellNameFn(locale, s)}`}
+              aria-label={`${t('combo.addSpell')} ${spellNameFn(locale, iconTheme, s)}`}
               onClick={() => addSpell(s)}
             >
-              <SpellIcon spell={s} tooltipName={spellNameFn(locale, s)} size={36} theme={iconTheme} />
+              <SpellIcon spell={s} tooltipName={spellNameFn(locale, iconTheme, s)} size={36} theme={iconTheme} />
             </button>
           ))}
         </div>
         <ol className="flex flex-wrap gap-2 mt-1">
           {spells.map((s, i) => (
             <li key={`${s}-${i}`} className="relative p-1 rounded bg-amber-600/30 border border-amber-500/40">
-              <SpellIcon spell={s} tooltipName={`${i + 1}. ${spellNameFn(locale, s)}`} size={32} theme={iconTheme} />
+              <SpellIcon spell={s} tooltipName={`${i + 1}. ${spellNameFn(locale, iconTheme, s)}`} size={32} theme={iconTheme} />
               <span className="absolute -top-1 -left-1 text-[10px] bg-neutral-900 rounded-full w-4 h-4 flex items-center justify-center">
                 {i + 1}
               </span>
@@ -107,7 +107,7 @@ export function ComboEditor({ initial, iconTheme, locale, t, onSave, onCancel }:
             <option value="">{t('combo.preCastNone')}</option>
             {dOptions.map((s) => (
               <option key={s} value={s}>
-                {spellNameFn(locale, s)}
+                {spellNameFn(locale, iconTheme, s)}
               </option>
             ))}
           </select>
@@ -124,7 +124,7 @@ export function ComboEditor({ initial, iconTheme, locale, t, onSave, onCancel }:
             <option value="">{t('combo.preCastNone')}</option>
             {fOptions.map((s) => (
               <option key={s} value={s}>
-                {spellNameFn(locale, s)}
+                {spellNameFn(locale, iconTheme, s)}
               </option>
             ))}
           </select>

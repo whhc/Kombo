@@ -113,7 +113,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
         {lastCast && !finished && (
           <span className={lastCast.type === 'CAST' ? 'text-emerald-400' : 'text-rose-400'}>
             {lastCast.type === 'CAST' ? t('practice.cast') : t('practice.missCast')}
-            {lastCast.spell ? `: ${spellNameFn(locale, lastCast.spell)}` : ''}
+            {lastCast.spell ? `: ${spellNameFn(locale, iconTheme, lastCast.spell)}` : ''}
           </span>
         )}
       </div>

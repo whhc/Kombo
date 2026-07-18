@@ -3,6 +3,8 @@ import { ALL_SPELLS } from './spellNames'
 
 /** 支持的语言 */
 export type Locale = 'zh' | 'en'
+/** 图标主题(与 icons.ts 的 IconTheme 保持一致) */
+export type IconTheme = 'DOTA1' | 'DOTA2'
 export const LOCALES: readonly Locale[] = ['zh', 'en']
 export const DEFAULT_LOCALE: Locale = 'zh'
 
@@ -162,38 +164,66 @@ const UI_EN: Dict = {
 }
 
 // ──────────────────────────────────────────────────────────────
-// 技能名 / 元素名(淘汰 spellNames.ts 的 SPELL_CN)
+// 元素名(扁平 key,走 t())
 // ──────────────────────────────────────────────────────────────
-const SPELL_ZH: Record<SpellName, string> = {
-  ColdSnap: '急速冷却',
-  GhostWalk: '幽灵漫步',
-  IceWall: '寒冰之墙',
-  EMP: '电磁脉冲',
-  Tornado: '强袭飓风',
-  Alacrity: '灵动迅捷',
-  SunStrike: '阳炎冲击',
-  ForgeSpirit: '熔炉精灵',
-  ChaosMeteor: '混沌陨石',
-  DeafeningBlast: '超震声波',
-}
-const SPELL_EN: Record<SpellName, string> = {
-  ColdSnap: 'Cold Snap',
-  GhostWalk: 'Ghost Walk',
-  IceWall: 'Ice Wall',
-  EMP: 'EMP',
-  Tornado: 'Tornado',
-  Alacrity: 'Alacrity',
-  SunStrike: 'Sun Strike',
-  ForgeSpirit: 'Forge Spirit',
-  ChaosMeteor: 'Chaos Meteor',
-  DeafeningBlast: 'Deafening Blast',
-}
 const ELEMENT_ZH: Record<Element, string> = { Q: '冰', W: '雷', E: '火' }
 const ELEMENT_EN: Record<Element, string> = { Q: 'Quas', W: 'Wex', E: 'Exort' }
 
-// 合并成完整字典
-const ZH: Dict = { ...UI_ZH, ...prefixed('spell.', SPELL_ZH), ...prefixed('element.', ELEMENT_ZH) }
-const EN: Dict = { ...UI_EN, ...prefixed('spell.', SPELL_EN), ...prefixed('element.', ELEMENT_EN) }
+// ──────────────────────────────────────────────────────────────
+// 技能全称:locale × theme 四维查表(dota1/dota2 译名有别)
+// 不走扁平 t() 字典,用专门数据结构 + spellName(locale, theme, spell)。
+//
+// 名称来源:dota2 为 Valve 官方译名;dota1 为 War3 DotA 时代通行译名。
+//   注:部分技能两版译名一致(沿用),有差异的按各版通行说法填写,待校对。
+// ──────────────────────────────────────────────────────────────
+type SpellNameI18n = Record<SpellName, Record<Locale, Record<IconTheme, string>>>
+
+const SPELL_NAME_I18N: SpellNameI18n = {
+  ColdSnap: {
+    zh: { DOTA1: '急速冷却', DOTA2: '急速冷却' },
+    en: { DOTA1: 'Cold Snap', DOTA2: 'Cold Snap' },
+  },
+  GhostWalk: {
+    zh: { DOTA1: '幽灵漫步', DOTA2: '幽灵漫步' },
+    en: { DOTA1: 'Ghost Walk', DOTA2: 'Ghost Walk' },
+  },
+  IceWall: {
+    zh: { DOTA1: '寒冰之墙', DOTA2: '寒冰之墙' },
+    en: { DOTA1: 'Ice Wall', DOTA2: 'Ice Wall' },
+  },
+  EMP: {
+    zh: { DOTA1: '电磁脉冲', DOTA2: '电磁脉冲' },
+    en: { DOTA1: 'EMP', DOTA2: 'EMP' },
+  },
+  Tornado: {
+    zh: { DOTA1: '龙卷风', DOTA2: '强袭飓风' }, // dota1 旧译"龙卷风",dota2 官方"强袭飓风"
+    en: { DOTA1: 'Tornado', DOTA2: 'Tornado' },
+  },
+  Alacrity: {
+    zh: { DOTA1: '灵动迅捷', DOTA2: '灵动迅捷' },
+    en: { DOTA1: 'Alacrity', DOTA2: 'Alacrity' },
+  },
+  SunStrike: {
+    zh: { DOTA1: '阳炎冲击', DOTA2: '阳炎冲击' },
+    en: { DOTA1: 'Sun Strike', DOTA2: 'Sun Strike' },
+  },
+  ForgeSpirit: {
+    zh: { DOTA1: '熔炉精灵', DOTA2: '熔炉精灵' },
+    en: { DOTA1: 'Forge Spirit', DOTA2: 'Forge Spirit' },
+  },
+  ChaosMeteor: {
+    zh: { DOTA1: '混沌陨石', DOTA2: '混沌陨石' },
+    en: { DOTA1: 'Chaos Meteor', DOTA2: 'Chaos Meteor' },
+  },
+  DeafeningBlast: {
+    zh: { DOTA1: '超震声波', DOTA2: '超震声波' },
+    en: { DOTA1: 'Deafening Blast', DOTA2: 'Deafening Blast' },
+  },
+}
+
+// 合并成完整字典(仅元素名走扁平 t();技能名走 spellName() 专项查表)
+const ZH: Dict = { ...UI_ZH, ...prefixed('element.', ELEMENT_ZH) }
+const EN: Dict = { ...UI_EN, ...prefixed('element.', ELEMENT_EN) }
 
 function prefixed(prefix: string, rec: Record<string, string>): Dict {
   const out: Dict = {}
@@ -216,9 +246,9 @@ export function t(locale: Locale, key: string): string {
   return val
 }
 
-/** 取某语言下某技能的显示名 */
-export function spellName(locale: Locale, spell: SpellName): string {
-  return t(locale, `spell.${spell}`)
+/** 取某语言 + 主题下某技能的全称(dota1/dota2 译名有别) */
+export function spellName(locale: Locale, theme: IconTheme, spell: SpellName): string {
+  return SPELL_NAME_I18N[spell][locale][theme]
 }
 /** 取某语言下某元素的显示名 */
 export function elementName(locale: Locale, el: Element): string {

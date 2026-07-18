@@ -134,7 +134,8 @@ describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
 
     const d1props = { locale: ZH_LOCALE, t: tZh, iconTheme: DOTA1_THEME }
     render(<PlayZone combo={shortCombo} scheme={'LEGACY'} {...d1props} />)
-    const d1src = screen.getByRole('img', { name: '强袭飓风' }).getAttribute('src')
+    // DOTA1 主题下 Tornado 中文名为"龙卷风"(dota1 旧译)
+    const d1src = screen.getByRole('img', { name: '龙卷风' }).getAttribute('src')
 
     expect(d2src).toBeTruthy()
     expect(d1src).toBeTruthy()
@@ -143,8 +144,8 @@ describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
 
   it('DOTA1 主题下 LEGACY 槽位标签显示技能传统键(X/C 而非 D/F)', () => {
     render(<PlayZone combo={shortCombo} scheme={'LEGACY'} locale={ZH_LOCALE} t={tZh} iconTheme={DOTA1_THEME} />)
-    // 预切 Tornado 在第一槽,LEGACY 标签应为 "X · 强袭飓风"
-    expect(screen.getByText(/X · 强袭飓风/)).toBeInTheDocument()
+    // 预切 Tornado 在第一槽,LEGACY 标签应为 "X · 龙卷风"(DOTA1 旧译)
+    expect(screen.getByText(/X · 龙卷风/)).toBeInTheDocument()
     // 不应出现误导的 "D · 第一顺位"
     expect(screen.queryByText(/D · 第一顺位/)).not.toBeInTheDocument()
   })

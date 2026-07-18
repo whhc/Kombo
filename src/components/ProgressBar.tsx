@@ -29,8 +29,8 @@ export function ProgressBar({ combo, progress, failedSteps, theme, locale, t }: 
               ? 'border-emerald-600 bg-emerald-600/20'
               : 'border-white/15 bg-white/5'
         return (
-          <div key={`${spell}-${i}`} className={`relative p-1 rounded border ${cls}`} title={spellNameFn(locale, spell)}>
-            <SpellIcon spell={spell} tooltipName={`${i + 1}. ${spellNameFn(locale, spell)}`} size={32} theme={theme} className={done ? 'opacity-60' : ''} />
+          <div key={`${spell}-${i}`} className={`relative p-1 rounded border ${cls}`} title={spellNameFn(locale, theme, spell)}>
+            <SpellIcon spell={spell} tooltipName={`${i + 1}. ${spellNameFn(locale, theme, spell)}`} size={32} theme={theme} className={done ? 'opacity-60' : ''} />
             <span className="absolute -top-1 -left-1 text-[10px] bg-neutral-900 rounded-full w-4 h-4 flex items-center justify-center">
               {i + 1}
             </span>

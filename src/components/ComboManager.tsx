@@ -64,12 +64,12 @@ export function ComboManager({ combos, onSave, onDelete, onSelect, iconTheme, lo
               <span className="font-medium">{resolveComboName(c, t)}</span>
               <span className="flex items-center gap-1 text-xs text-neutral-400">
                 {c.spells.map((s, i) => (
-                  <SpellIcon key={i} spell={s} tooltipName={spellNameFn(locale, s)} size={20} theme={iconTheme} className="opacity-80" />
+                  <SpellIcon key={i} spell={s} tooltipName={spellNameFn(locale, iconTheme, s)} size={20} theme={iconTheme} className="opacity-80" />
                 ))}
                 {(c.preCastSlots.d || c.preCastSlots.f) && (
                   <span className="ml-2 text-amber-400">
                     {t('combo.preCastLabel')}:
-                    {[c.preCastSlots.d && spellNameFn(locale, c.preCastSlots.d), c.preCastSlots.f && spellNameFn(locale, c.preCastSlots.f)].filter(Boolean).join(' / ')}
+                    {[c.preCastSlots.d && spellNameFn(locale, iconTheme, c.preCastSlots.d), c.preCastSlots.f && spellNameFn(locale, iconTheme, c.preCastSlots.f)].filter(Boolean).join(' / ')}
                   </span>
                 )}
               </span>
