@@ -43,6 +43,16 @@ describe('Dashboard — 数据复盘区(i18n)', () => {
     expect(screen.getAllByText(/75%/).length).toBe(2)
   })
 
+  it('会话时间显示为真实日期(当前年份,非 1970 纪元)', () => {
+    // 回归:performance.now() 当 epoch 用会显示 1970;现在用 Date.now() 应显示真实日期
+    const now = Date.now()
+    const sessions = [mkSession('s1', 'SUCCESS', now)]
+    render(<Dashboard sessions={sessions} {...props} />)
+    const year = new Date(now).getFullYear()
+    // 列表项里应出现当前年份(而非 1970)
+    expect(screen.getAllByText(new RegExp(String(year))).length).toBeGreaterThan(0)
+  })
+
   it('点击某条会话选中后显示节奏散点图区', () => {
     const now = Date.now()
     const actions: ActionNode[] = [

@@ -63,7 +63,9 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
     if (!combo || !session || finished) return
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toUpperCase()
-      const now = performance.now()
+      // 用 Date.now()(Unix epoch 毫秒),而非 performance.now()(页面加载后相对值),
+      // 保证 Dashboard 的 new Date(startTime) 显示真实日期
+      const now = Date.now()
       const result = handleInvokerKey(invoker, key, now, lastTs, scheme)
       if (result.action) {
         setInvoker(result.state)
@@ -80,7 +82,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
 
   const endSession = () => {
     if (!combo || !session) return
-    const result = finishSession(session, combo, performance.now())
+    const result = finishSession(session, combo, Date.now())
     const metrics = evaluateSession(result, combo)
     const withMetrics = { ...result, metrics }
     saveSession(localStorageSessionBackend, withMetrics)
