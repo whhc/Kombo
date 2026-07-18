@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { PlayZone } from './components/PlayZone'
 import { ComboManager } from './components/ComboManager'
+import { Dashboard } from './components/Dashboard'
 import { useSettings } from './hooks/useSettings'
 import { useCombos } from './hooks/useCombos'
+import { useSessions } from './hooks/useSessions'
 import type { TargetCombo } from './domain/types'
 
-type View = 'practice' | 'combos'
+type View = 'practice' | 'combos' | 'dashboard'
 
 function App() {
   const { settings, setSettings, scheme } = useSettings()
   const { combos, addOrUpdate, remove } = useCombos()
+  const { sessions, refresh } = useSessions()
   const [view, setView] = useState<View>('practice')
   const [activeCombo, setActiveCombo] = useState<TargetCombo | null>(null)
 
@@ -32,6 +35,16 @@ function App() {
           >
             连招库
           </button>
+          <button
+            type="button"
+            className={`px-3 py-1 rounded border ${view === 'dashboard' ? 'bg-white/15 border-white/30' : 'border-white/15 hover:bg-white/5'}`}
+            onClick={() => {
+              refresh()
+              setView('dashboard')
+            }}
+          >
+            复盘
+          </button>
         </nav>
       </header>
 
@@ -48,6 +61,8 @@ function App() {
           }}
         />
       )}
+
+      {view === 'dashboard' && <Dashboard sessions={sessions} />}
 
       <SettingsBar settings={settings} setSettings={setSettings} />
     </div>
