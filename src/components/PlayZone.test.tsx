@@ -57,7 +57,7 @@ describe('PlayZone — 会话与宽松继续', () => {
     // 会话未中断,仍可点结束
     expect(screen.getByRole('button', { name: '结束并保存' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '结束并保存' }))
-    expect(screen.getByText(/失败/)).toBeInTheDocument()
+    expect(screen.getByText(/✗ 失败/)).toBeInTheDocument()
   })
 
   it('结束后点"再练一次"重置会话', async () => {

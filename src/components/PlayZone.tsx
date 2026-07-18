@@ -4,7 +4,8 @@ import { SlotDisplay } from './SlotDisplay'
 import { ProgressBar } from './ProgressBar'
 import { handleInvokerKey, type InvokerState } from '../domain/invokerEngine'
 import { createSession, pushAction, finishSession, createInitialInvokerState, type SessionState } from '../domain/sessionEngine'
-import type { TargetCombo, SpellName } from '../domain/types'
+import { evaluateSession } from '../domain/evaluator'
+import type { TargetCombo, SpellName, SessionMetrics } from '../domain/types'
 import { saveSession, localStorageSessionBackend } from '../domain/sessionStore'
 import type { KeybindScheme } from '../domain/keymap'
 
@@ -19,7 +20,7 @@ export function PlayZone({ combo, scheme }: Props) {
   const [session, setSession] = useState<SessionState | null>(null)
   const [lastTs, setLastTs] = useState(0)
   const [lastCast, setLastCast] = useState<{ type: 'CAST' | 'MISS_CAST'; spell: SpellName | null } | null>(null)
-  const [finished, setFinished] = useState<{ status: 'SUCCESS' | 'FAILED' } | null>(null)
+  const [finished, setFinished] = useState<{ status: 'SUCCESS' | 'FAILED'; metrics: SessionMetrics } | null>(null)
 
   // combo 变化时重置会话 + 应用预切起手
   useEffect(() => {
@@ -58,8 +59,10 @@ export function PlayZone({ combo, scheme }: Props) {
   const endSession = () => {
     if (!combo || !session) return
     const result = finishSession(session, combo, performance.now())
-    saveSession(localStorageSessionBackend, result)
-    setFinished({ status: result.status })
+    const metrics = evaluateSession(result, combo)
+    const withMetrics = { ...result, metrics }
+    saveSession(localStorageSessionBackend, withMetrics)
+    setFinished({ status: result.status, metrics })
   }
 
   if (!combo) {
@@ -83,10 +86,11 @@ export function PlayZone({ combo, scheme }: Props) {
       </div>
 
       {finished ? (
-        <div className="flex flex-col items-center gap-2">
-          <span className={finished.status === 'SUCCESS' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+        <div className="flex flex-col items-center gap-3">
+          <span className={finished.status === 'SUCCESS' ? 'text-emerald-400 font-bold text-lg' : 'text-rose-400 font-bold text-lg'}>
             {finished.status === 'SUCCESS' ? '✓ 成功' : '✗ 失败(有跑偏步骤)'}
           </span>
+          <MetricsPanel metrics={finished.metrics} />
           <button
             type="button"
             className="px-3 py-1 text-sm rounded bg-sky-600 hover:bg-sky-500"
@@ -106,6 +110,29 @@ export function PlayZone({ combo, scheme }: Props) {
           结束并保存
         </button>
       )}
+    </div>
+  )
+}
+
+/** 三维评估结果展示(doc.md §4.2) */
+function MetricsPanel({ metrics }: { metrics: SessionMetrics }) {
+  const orbPct = metrics.orbRatio !== null ? `${Math.round(metrics.orbRatio * 100)}%` : 'N/A(失败轮次)'
+  return (
+    <div className="flex gap-6 text-sm" aria-label="评估结果">
+      <div className="flex flex-col items-center">
+        <span className="text-neutral-400 text-xs">切球达成率</span>
+        <span className={metrics.orbRatio !== null ? 'text-amber-300 font-semibold' : 'text-neutral-500'}>
+          {orbPct}
+        </span>
+      </div>
+      <div className="flex flex-col items-center">
+        <span className="text-neutral-400 text-xs">多切次数</span>
+        <span className="text-rose-300 font-semibold">{metrics.excessOrbSwitches}</span>
+      </div>
+      <div className="flex flex-col items-center">
+        <span className="text-neutral-400 text-xs">时长(ms)</span>
+        <span className="text-sky-300 font-semibold">{Math.round(metrics.durationMs)}</span>
+      </div>
     </div>
   )
 }
