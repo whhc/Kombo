@@ -281,3 +281,46 @@ v1 采用**三个正交维度**评估一次会话,避免把"合成正确性"与"
 
 - ⏸️ **v2:** 装备参数(A 杖/玲珑心影响前摇)、技能冷却模拟、成长趋势折线图、多轮成功率统计、挑战模式与成绩系统、精确最优化切球算法、自定义改键。
 - ⏸️ **不做:** 全局键盘监听(`rdev`)、游戏内 overlay、读游戏内存/GSI —— 形态上已排除(见 §0)。
+
+---
+
+## 7. 实现期决策(v1 落地时的偏离记录)
+
+v1 实现过程中,在尊重 §0~§6 设计共识的前提下,做了以下工程取舍,记录以便溯源:
+
+| 决策 | 原文档表述 | 实现选择 | 理由 |
+| --- | --- | --- | --- |
+| 宿主框架 | Tauri v2(§1) | **纯前端 Vite + React**(无 Tauri) | 形态乙下 Rust 端无实质工作;先纯前端快速迭代,Tauri 外壳留待打包分发阶段再加 |
+| 键盘监听层 | DOM keydown(§1/§3) | React 组件内 `window.addEventListener('keydown')` | 一致,无偏离 |
+| 本地存储 | IndexedDB(§1/§5.3) | **localStorage**(TargetCombo + UserSettings + ExecutionSession) | 数据量小,localStorage 同步 API 更简;IndexedDB 在数据量增长后再引入 |
+| 图表渲染 | ECharts(§1/§5.2) | ECharts 全量 + **SVG renderer** | SVG 便于测试环境(jsdom 无 canvas);全量打包致 bundle 偏大(~1.3MB / gzip 448KB),v1 可接受,后续按需引入 `echarts/core` 优化 |
+| 测试 | 未指定 | Vitest + @testing-library/react,垂直切片 TDD | tdd skill 方法论,领域逻辑纯函数测试 + 组件行为测试 |
+| DOTA1 图标 | §2.4 提及切换 | **暂用 DOTA2 图标占位**(用户提供 dota2 图标,dota1 待补) | 图标主题切换逻辑已就绪,dota1 资源到位后替换即可 |
+
+### 源码结构
+
+```
+src/
+├── domain/          # 纯领域逻辑(无 React 依赖,纯函数测试)
+│   ├── types.ts            # 数据模型 SSOT
+│   ├── orbEngine.ts        # 切球 FIFO
+│   ├── spellBook.ts        # 技能→元素配方查表
+│   ├── slotEngine.ts       # 双槽位三规则
+│   ├── invokerEngine.ts    # 统一按键入口(切球/祈唤/释放)
+│   ├── keymap.ts           # LEGACY/DOTA2 键位方案
+│   ├── castEngine.ts       # CAST/MISS_CAST 判定
+│   ├── settings.ts         # UserSettings + 图标/键位绑定
+│   ├── combo.ts            # TargetCombo 前缀约束校验
+│   ├── comboStore.ts       # 连招持久化
+│   ├── sessionStore.ts     # 会话持久化
+│   ├── sessionEngine.ts    # 会话状态机(宽松继续)
+│   ├── evaluator.ts        # 三维评估 + 贪心最优切球
+│   ├── rhythmChart.ts      # 散点数据转换
+│   ├── presets.ts          # 经典连招预设
+│   └── spellNames.ts       # 技能中文名
+├── hooks/           # useSettings / useCombos / useSessions
+├── components/      # PlayZone / ComboManager / ComboEditor / Dashboard / RhythmScatter / OrbDisplay / SlotDisplay / ProgressBar
+└── App.tsx          # 视图路由(练习/连招库/复盘)
+```
+
+**测试覆盖:** 80 个测试,涵盖全部 domain 纯函数 + 关键组件行为,垂直切片 TDD 推进(每 issue 一提交)。
