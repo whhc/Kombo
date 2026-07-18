@@ -2,26 +2,30 @@ import { useState } from 'react'
 import type { TargetCombo } from '../domain/types'
 import { SpellIcon } from './SpellIcon'
 import { ComboEditor } from './ComboEditor'
+import { PlayZone } from './PlayZone'
 import { resolveComboName } from '../domain/resolveComboName'
 import { spellName as spellNameFn } from '../domain/i18n'
 import type { Locale } from '../domain/i18n'
 import type { IconTheme } from '../domain/icons'
+import type { KeybindScheme } from '../domain/keymap'
 
 interface Props {
   combos: TargetCombo[]
   onSave: (combo: TargetCombo) => void
   onDelete: (comboId: string) => void
-  onSelect: (combo: TargetCombo) => void
+  scheme: KeybindScheme
   iconTheme: IconTheme
   locale: Locale
   t: (key: string) => string
 }
 
-/** 连招列表 + 新建/编辑/删除入口 */
-export function ComboManager({ combos, onSave, onDelete, onSelect, iconTheme, locale, t }: Props) {
+/** 连招列表 + 新建/编辑 + 内嵌练习(practicing) */
+export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, locale, t }: Props) {
   const [editing, setEditing] = useState<TargetCombo | null>(null)
   const [creating, setCreating] = useState(false)
+  const [practicing, setPracticing] = useState<TargetCombo | null>(null)
 
+  // 编辑/新建优先
   if (creating || editing) {
     return (
       <ComboEditor
@@ -42,6 +46,21 @@ export function ComboManager({ combos, onSave, onDelete, onSelect, iconTheme, lo
     )
   }
 
+  // 内嵌练习
+  if (practicing) {
+    return (
+      <PlayZone
+        combo={practicing}
+        scheme={scheme}
+        iconTheme={iconTheme}
+        locale={locale}
+        t={t}
+        onQuit={() => setPracticing(null)}
+      />
+    )
+  }
+
+  // 列表
   return (
     <div className="flex flex-col gap-3 max-w-2xl w-full">
       <div className="flex items-center justify-between">
@@ -75,7 +94,7 @@ export function ComboManager({ combos, onSave, onDelete, onSelect, iconTheme, lo
               </span>
             </div>
             <div className="flex gap-2">
-              <button type="button" className="px-2 py-1 text-xs rounded bg-sky-600 hover:bg-sky-500" onClick={() => onSelect(c)}>
+              <button type="button" className="px-2 py-1 text-xs rounded bg-sky-600 hover:bg-sky-500" onClick={() => setPracticing(c)}>
                 {t('combo.practice')}
               </button>
               <button type="button" className="px-2 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setEditing(c)}>

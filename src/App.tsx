@@ -7,7 +7,6 @@ import { useSettings } from './hooks/useSettings'
 import { useCombos } from './hooks/useCombos'
 import { useSessions } from './hooks/useSessions'
 import { useLocale } from './hooks/useLocale'
-import type { TargetCombo } from './domain/types'
 import type { Locale } from './domain/i18n'
 
 type View = 'practice' | 'combos' | 'dashboard'
@@ -18,7 +17,6 @@ function App() {
   const { sessions, refresh } = useSessions()
   const { locale, toggle, t } = useLocale()
   const [view, setView] = useState<View>('practice')
-  const [activeCombo, setActiveCombo] = useState<TargetCombo | null>(null)
 
   return (
     <div className="h-full w-full bg-neutral-950 text-neutral-100 flex flex-col items-center gap-6 py-8">
@@ -29,7 +27,6 @@ function App() {
             locale={locale}
             size={48}
             onClick={() => {
-              // 切换图标主题;DOTA1 图标强制 LEGACY 键位(doc.md §2.4)
               const nextTheme = settings.iconTheme === 'DOTA1' ? 'DOTA2' : 'DOTA1'
               setSettings({
                 ...settings,
@@ -68,17 +65,16 @@ function App() {
         </nav>
       </header>
 
-      {view === 'practice' && <PlayZone combo={activeCombo} scheme={scheme} iconTheme={settings.iconTheme} locale={locale} t={t} />}
+      {view === 'practice' && (
+        <PlayZone combo={null} scheme={scheme} iconTheme={settings.iconTheme} locale={locale} t={t} />
+      )}
 
       {view === 'combos' && (
         <ComboManager
           combos={combos}
           onSave={addOrUpdate}
           onDelete={remove}
-          onSelect={(c) => {
-            setActiveCombo(c)
-            setView('practice')
-          }}
+          scheme={scheme}
           iconTheme={settings.iconTheme}
           locale={locale}
           t={t}

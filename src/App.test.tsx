@@ -3,63 +3,58 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import App from './App'
 import { t as translate } from './domain/i18n'
 
-// App 层测视图路由 + 语言切换 + 连招库入口。
+// App 层测视图路由 + 语言切换 + 自由练习 + combos 内嵌。
 // 按键练习行为由 PlayZone.test 覆盖。
 
 describe('App — 视图路由 + i18n', () => {
-  it('默认渲染练习视图且无选中连招时显示引导(中文)', () => {
+  it('默认渲染练习视图(自由模式,无目标连招)', () => {
     render(<App />)
     expect(screen.getByRole('button', { name: translate('zh', 'nav.practice') })).toBeInTheDocument()
-    expect(screen.getByText(translate('zh', 'practice.guide'))).toBeInTheDocument()
+    // 自由模式:显示"自由练习"而非旧引导消息
+    expect(screen.getByText(translate('zh', 'practice.freePlay'))).toBeInTheDocument()
   })
 
-  it('切到连招库视图能看到预设连招(预设名已翻译为中文)', () => {
+  it('切到连招库视图能看到预设连招', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'nav.combos') }))
     expect(screen.getByText(translate('zh', 'preset.tornadoEmpMeteorBlast'))).toBeInTheDocument()
   })
 
-  it('连招库点练习选中连招,回到练习视图显示连招名', () => {
+  it('连招库点练习进入内嵌练习(不切tab,显示Quit按钮)', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'nav.combos') }))
-    const practiceButtons = screen.getAllByRole('button', { name: translate('zh', 'combo.practice') })
-    fireEvent.click(practiceButtons[1]) // 列表第一条
+    const btns = screen.getAllByRole('button', { name: translate('zh', 'combo.practice') })
+    fireEvent.click(btns[1]) // [0]是nav的练习,[1]是列表第一条
+    expect(screen.getByRole('button', { name: translate('zh', 'practice.quit') })).toBeInTheDocument()
     expect(screen.getByText(new RegExp(translate('zh', 'practice.currentCombo')))).toBeInTheDocument()
   })
 
-  it('SettingsBar 键位按钮:DOTA1 图标(经头像切)后锁定 LEGACY', () => {
+  it('内嵌练习点 Quit 返回连招列表', () => {
     render(<App />)
-    // 经头像切到 DOTA1 图标(图标切换按钮已移除,头像负责切主题)
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'nav.combos') }))
+    const btns = screen.getAllByRole('button', { name: translate('zh', 'combo.practice') })
+    fireEvent.click(btns[1])
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'practice.quit') }))
+    expect(screen.getByRole('heading', { name: translate('zh', 'combo.library') })).toBeInTheDocument()
+  })
+
+  it('DOTA1 图标时键位锁定 LEGACY', () => {
+    render(<App />)
     fireEvent.click(screen.getByRole('button', { name: `${translate('zh', 'settings.iconThemeToggle')}: DOTA2` }))
     expect(screen.getByText(new RegExp(translate('zh', 'settings.keybind.lockedLegacy')))).toBeInTheDocument()
   })
 
-  it('语言切换:点语言按钮后导航与引导文案变英文', () => {
+  it('语言切换后导航与自由练习文案变英文', () => {
     render(<App />)
-    // 默认中文
-    expect(screen.getByText(translate('zh', 'practice.guide'))).toBeInTheDocument()
-    // 点语言切换按钮(显示 "中 / EN")
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.language') }))
-    // 现在导航应变英文
     expect(screen.getByRole('button', { name: translate('en', 'nav.practice') })).toBeInTheDocument()
-    expect(screen.getByText(translate('en', 'practice.guide'))).toBeInTheDocument()
+    expect(screen.getByText(translate('en', 'practice.freePlay'))).toBeInTheDocument()
   })
 
-  it('语言切换后预设连招名也跟随变英文', () => {
+  it('语言切换后连招库预设名也跟随变英文', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.language') }))
     fireEvent.click(screen.getByRole('button', { name: translate('en', 'nav.combos') }))
     expect(screen.getByText(translate('en', 'preset.tornadoEmpMeteorBlast'))).toBeInTheDocument()
-  })
-
-  it('点击卡尔头像切换图标主题(DOTA2→DOTA1),且 DOTA1 时键位锁 LEGACY', () => {
-    render(<App />)
-    // 默认 DOTA2,头像 aria-label 含 DOTA2(用独立 toggle label 区分 SettingsBar)
-    const heroBtn = screen.getByRole('button', { name: `${translate('zh', 'settings.iconThemeToggle')}: DOTA2` })
-    fireEvent.click(heroBtn)
-    // 切到 DOTA1:头像标签变 DOTA1,SettingsBar 图标标签也变 DOTA1
-    expect(screen.getByRole('button', { name: `${translate('zh', 'settings.iconThemeToggle')}: DOTA1` })).toBeInTheDocument()
-    // DOTA1 图标 → 键位锁定 LEGACY
-    expect(screen.getByText(new RegExp(translate('zh', 'settings.keybind.lockedLegacy')))).toBeInTheDocument()
   })
 })
