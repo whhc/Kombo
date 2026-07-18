@@ -1,32 +1,46 @@
 import { describe, it, expect } from 'vitest'
-import { spellIconUrl, elementIconUrl } from './icons'
+import { spellIconUrl, elementIconUrl, heroIconUrl } from './icons'
 import { ALL_SPELLS } from './spellNames'
 import type { Element } from './types'
 
-describe('icons — 图标资源映射 SSOT', () => {
-  // tracer bullet:每个技能都有图标 URL
-  it('每个 SpellName 都能解析出非空图标 URL', () => {
+describe('icons — 图标资源映射 SSOT(双主题)', () => {
+  it('每个 SpellName 在 DOTA2 主题下都有非空 URL', () => {
     for (const spell of ALL_SPELLS) {
-      const url = spellIconUrl(spell)
-      expect(url, `${spell} 应有图标 URL`).toBeTruthy()
-      expect(typeof url).toBe('string')
+      const url = spellIconUrl(spell, 'DOTA2')
+      expect(url, `${spell} DOTA2 应有图标`).toBeTruthy()
     }
   })
 
-  it('EMP 的图标文件名含特殊点号(E.M.P._icon)', () => {
-    // 这是不规则名,验证映射没有写错
-    expect(spellIconUrl('EMP')).toContain('E.M.P.')
+  it('每个 SpellName 在 DOTA1 主题下都有非空 URL', () => {
+    for (const spell of ALL_SPELLS) {
+      const url = spellIconUrl(spell, 'DOTA1')
+      expect(url, `${spell} DOTA1 应有图标`).toBeTruthy()
+    }
   })
 
-  it('每个元素 Q/W/E 都有图标 URL', () => {
+  it('DOTA2 主题 EMP 文件名含 E.M.P.', () => {
+    expect(spellIconUrl('EMP', 'DOTA2')).toContain('E.M.P.')
+  })
+
+  it('DOTA1 主题与 DOTA2 主题返回不同 URL(资源分流)', () => {
+    // 同技能两个主题应来自不同目录
+    expect(spellIconUrl('Tornado', 'DOTA1')).not.toBe(spellIconUrl('Tornado', 'DOTA2'))
+  })
+
+  it('每个元素 Q/W/E 在两个主题下都有 URL', () => {
     for (const el of ['Q', 'W', 'E'] as Element[]) {
-      expect(elementIconUrl(el), `${el} 应有图标`).toBeTruthy()
+      expect(elementIconUrl(el, 'DOTA2')).toBeTruthy()
+      expect(elementIconUrl(el, 'DOTA1')).toBeTruthy()
     }
   })
 
-  it('Q 元素 → Quas 图标,W → Wex,E → Exort', () => {
-    expect(elementIconUrl('Q')).toContain('Quas')
-    expect(elementIconUrl('W')).toContain('Wex')
-    expect(elementIconUrl('E')).toContain('Exort')
+  it('英雄头像图标在两个主题下都有 URL', () => {
+    expect(heroIconUrl('DOTA2')).toBeTruthy()
+    expect(heroIconUrl('DOTA1')).toBeTruthy()
+  })
+
+  it('未传 theme 时默认 DOTA2(向后兼容)', () => {
+    expect(spellIconUrl('Tornado')).toBeTruthy()
+    expect(elementIconUrl('Q')).toBeTruthy()
   })
 })

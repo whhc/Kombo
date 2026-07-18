@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PlayZone } from './components/PlayZone'
 import { ComboManager } from './components/ComboManager'
 import { Dashboard } from './components/Dashboard'
+import { HeroIcon } from './components/HeroIcon'
 import { useSettings } from './hooks/useSettings'
 import { useCombos } from './hooks/useCombos'
 import { useSessions } from './hooks/useSessions'
@@ -22,7 +23,10 @@ function App() {
   return (
     <div className="h-full w-full bg-neutral-950 text-neutral-100 flex flex-col items-center gap-6 py-8">
       <header className="flex flex-col items-center gap-3">
-        <h1 className="text-2xl font-bold">{t('app.title')}</h1>
+        <div className="flex items-center gap-3">
+          <HeroIcon theme={settings.iconTheme} locale={locale} size={48} />
+          <h1 className="text-2xl font-bold">{t('app.title')}</h1>
+        </div>
         <nav className="flex gap-2 text-sm">
           <button
             type="button"
@@ -51,7 +55,7 @@ function App() {
         </nav>
       </header>
 
-      {view === 'practice' && <PlayZone combo={activeCombo} scheme={scheme} locale={locale} t={t} />}
+      {view === 'practice' && <PlayZone combo={activeCombo} scheme={scheme} iconTheme={settings.iconTheme} locale={locale} t={t} />}
 
       {view === 'combos' && (
         <ComboManager
@@ -62,6 +66,7 @@ function App() {
             setActiveCombo(c)
             setView('practice')
           }}
+          iconTheme={settings.iconTheme}
           locale={locale}
           t={t}
         />

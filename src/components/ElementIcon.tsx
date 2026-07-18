@@ -1,19 +1,19 @@
 import type { Element } from '../domain/types'
-import { elementIconUrl } from '../domain/icons'
+import { elementIconUrl, type IconTheme } from '../domain/icons'
 
 interface Props {
   element: Element
-  /** tooltip/alt 文案(已翻译的元素名) */
   tooltipName: string
   size?: number
   className?: string
+  theme?: IconTheme
 }
 
 /** 元素球图标(Q/W/E) */
-export function ElementIcon({ element, tooltipName, size = 56, className }: Props) {
+export function ElementIcon({ element, tooltipName, size = 56, className, theme = 'DOTA2' }: Props) {
   return (
     <img
-      src={elementIconUrl(element)}
+      src={elementIconUrl(element, theme)}
       alt={tooltipName}
       title={tooltipName}
       width={size}

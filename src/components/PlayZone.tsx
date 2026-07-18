@@ -11,16 +11,18 @@ import { saveSession, localStorageSessionBackend } from '../domain/sessionStore'
 import { spellName as spellNameFn } from '../domain/i18n'
 import type { KeybindScheme } from '../domain/keymap'
 import type { Locale } from '../domain/i18n'
+import type { IconTheme } from '../domain/icons'
 
 interface Props {
   combo: TargetCombo | null
   scheme: KeybindScheme
+  iconTheme: IconTheme
   locale: Locale
   t: (key: string) => string
 }
 
 /** 主练习区:持目标连招时启动会话,记录动作,进度条温和提示,宽松继续 */
-export function PlayZone({ combo, scheme, locale, t }: Props) {
+export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
   const [invoker, setInvoker] = useState<InvokerState>({ orbs: [], slots: [null, null] })
   const [session, setSession] = useState<SessionState | null>(null)
   const [lastTs, setLastTs] = useState(0)
@@ -76,9 +78,9 @@ export function PlayZone({ combo, scheme, locale, t }: Props) {
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
       <p className="text-amber-300 text-sm">{t('practice.currentCombo')}: {resolveComboName(combo, t)}</p>
-      <OrbDisplay orbs={invoker.orbs} locale={locale} t={t} />
-      <SlotDisplay slots={invoker.slots} scheme={scheme} locale={locale} t={t} />
-      <ProgressBar combo={combo} progress={session?.progress ?? 0} failedSteps={session?.failedSteps ?? []} locale={locale} t={t} />
+      <OrbDisplay orbs={invoker.orbs} theme={iconTheme} locale={locale} t={t} />
+      <SlotDisplay slots={invoker.slots} scheme={scheme} theme={iconTheme} locale={locale} t={t} />
+      <ProgressBar combo={combo} progress={session?.progress ?? 0} failedSteps={session?.failedSteps ?? []} theme={iconTheme} locale={locale} t={t} />
 
       <div className="text-sm h-6">
         {lastCast && !finished && (

@@ -5,18 +5,20 @@ import { ComboEditor } from './ComboEditor'
 import { resolveComboName } from '../domain/resolveComboName'
 import { spellName as spellNameFn } from '../domain/i18n'
 import type { Locale } from '../domain/i18n'
+import type { IconTheme } from '../domain/icons'
 
 interface Props {
   combos: TargetCombo[]
   onSave: (combo: TargetCombo) => void
   onDelete: (comboId: string) => void
   onSelect: (combo: TargetCombo) => void
+  iconTheme: IconTheme
   locale: Locale
   t: (key: string) => string
 }
 
 /** 连招列表 + 新建/编辑/删除入口 */
-export function ComboManager({ combos, onSave, onDelete, onSelect, locale, t }: Props) {
+export function ComboManager({ combos, onSave, onDelete, onSelect, iconTheme, locale, t }: Props) {
   const [editing, setEditing] = useState<TargetCombo | null>(null)
   const [creating, setCreating] = useState(false)
 
@@ -24,6 +26,7 @@ export function ComboManager({ combos, onSave, onDelete, onSelect, locale, t }: 
     return (
       <ComboEditor
         initial={editing ?? undefined}
+        iconTheme={iconTheme}
         locale={locale}
         t={t}
         onSave={(combo) => {
@@ -61,7 +64,7 @@ export function ComboManager({ combos, onSave, onDelete, onSelect, locale, t }: 
               <span className="font-medium">{resolveComboName(c, t)}</span>
               <span className="flex items-center gap-1 text-xs text-neutral-400">
                 {c.spells.map((s, i) => (
-                  <SpellIcon key={i} spell={s} tooltipName={spellNameFn(locale, s)} size={20} className="opacity-80" />
+                  <SpellIcon key={i} spell={s} tooltipName={spellNameFn(locale, s)} size={20} theme={iconTheme} className="opacity-80" />
                 ))}
                 {(c.preCastSlots.d || c.preCastSlots.f) && (
                   <span className="ml-2 text-amber-400">

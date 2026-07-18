@@ -4,9 +4,11 @@ import { ALL_SPELLS } from '../domain/spellNames'
 import { SpellIcon } from './SpellIcon'
 import { spellName as spellNameFn } from '../domain/i18n'
 import type { Locale } from '../domain/i18n'
+import type { IconTheme } from '../domain/icons'
 
 interface Props {
   initial?: TargetCombo
+  iconTheme: IconTheme
   locale: Locale
   t: (key: string) => string
   onSave: (combo: TargetCombo) => void
@@ -14,7 +16,7 @@ interface Props {
 }
 
 /** 连招编辑器:命名 + 选技能成序列 + 可选预切前缀 + 保存 */
-export function ComboEditor({ initial, locale, t, onSave, onCancel }: Props) {
+export function ComboEditor({ initial, iconTheme, locale, t, onSave, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? '')
   const [spells, setSpells] = useState<SpellName[]>(initial?.spells ?? [])
   const [preD, setPreD] = useState<SpellName | ''>(initial?.preCastSlots.d ?? '')
@@ -65,14 +67,14 @@ export function ComboEditor({ initial, locale, t, onSave, onCancel }: Props) {
               aria-label={`${t('combo.addSpell')} ${spellNameFn(locale, s)}`}
               onClick={() => addSpell(s)}
             >
-              <SpellIcon spell={s} tooltipName={spellNameFn(locale, s)} size={36} />
+              <SpellIcon spell={s} tooltipName={spellNameFn(locale, s)} size={36} theme={iconTheme} />
             </button>
           ))}
         </div>
         <ol className="flex flex-wrap gap-2 mt-1">
           {spells.map((s, i) => (
             <li key={`${s}-${i}`} className="relative p-1 rounded bg-amber-600/30 border border-amber-500/40">
-              <SpellIcon spell={s} tooltipName={`${i + 1}. ${spellNameFn(locale, s)}`} size={32} />
+              <SpellIcon spell={s} tooltipName={`${i + 1}. ${spellNameFn(locale, s)}`} size={32} theme={iconTheme} />
               <span className="absolute -top-1 -left-1 text-[10px] bg-neutral-900 rounded-full w-4 h-4 flex items-center justify-center">
                 {i + 1}
               </span>

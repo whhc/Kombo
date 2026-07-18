@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ComboEditor } from './ComboEditor'
-import { ZH_LOCALE, tZh } from '../test/i18nHelpers'
+import { ZH_LOCALE, tZh, DOTA2_THEME } from '../test/i18nHelpers'
 import type { TargetCombo } from '../domain/types'
 
-const props = { locale: ZH_LOCALE, t: tZh }
+const props = { locale: ZH_LOCALE, t: tZh, iconTheme: DOTA2_THEME }
 
 describe('ComboEditor — 连招编辑器(图标+i18n)', () => {
   it('点技能图标把技能加入 spells 序列', () => {
