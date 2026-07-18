@@ -1,36 +1,54 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import App from './App'
+import { t as translate } from './domain/i18n'
 
-// App 层只测视图路由与连招库入口;
-// 按键练习行为由 PlayZone.test.tsx 覆盖,
-// 切球/祈唤/释放由 domain 层单测覆盖。
+// App 层测视图路由 + 语言切换 + 连招库入口。
+// 按键练习行为由 PlayZone.test 覆盖。
 
-describe('App — 视图路由', () => {
-  it('默认渲染练习视图且无选中连招时显示引导', () => {
+describe('App — 视图路由 + i18n', () => {
+  it('默认渲染练习视图且无选中连招时显示引导(中文)', () => {
     render(<App />)
-    expect(screen.getByRole('button', { name: '练习' })).toBeInTheDocument()
-    expect(screen.getByText(/从.+连招库.+选择/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: translate('zh', 'nav.practice') })).toBeInTheDocument()
+    expect(screen.getByText(translate('zh', 'practice.guide'))).toBeInTheDocument()
   })
 
-  it('切到连招库视图能看到预设连招(含吹风磁暴陨石推波)', () => {
+  it('切到连招库视图能看到预设连招(预设名已翻译为中文)', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: '连招库' }))
-    expect(screen.getByText('吹风 → 磁暴 → 陨石 → 推波')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'nav.combos') }))
+    expect(screen.getByText(translate('zh', 'preset.tornadoEmpMeteorBlast'))).toBeInTheDocument()
   })
 
   it('连招库点练习选中连招,回到练习视图显示连招名', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: '连招库' }))
-    const practiceButtons = screen.getAllByRole('button', { name: '练习' })
-    fireEvent.click(practiceButtons[1]) // 列表第一条的练习按钮
-    expect(screen.getByText(/当前连招/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'nav.combos') }))
+    const practiceButtons = screen.getAllByRole('button', { name: translate('zh', 'combo.practice') })
+    fireEvent.click(practiceButtons[1]) // 列表第一条
+    expect(screen.getByText(new RegExp(translate('zh', 'practice.currentCombo')))).toBeInTheDocument()
   })
 
   it('SettingsBar: DOTA1 图标时键位锁定 LEGACY', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: /图标: DOTA2/ }))
-    // 切到 DOTA1 图标
-    expect(screen.getByText(/锁定 LEGACY/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(translate('zh', 'settings.iconTheme')) }))
+    // 切到 DOTA1 图标后显示锁定提示
+    expect(screen.getByText(new RegExp(translate('zh', 'settings.keybind.lockedLegacy')))).toBeInTheDocument()
+  })
+
+  it('语言切换:点语言按钮后导航与引导文案变英文', () => {
+    render(<App />)
+    // 默认中文
+    expect(screen.getByText(translate('zh', 'practice.guide'))).toBeInTheDocument()
+    // 点语言切换按钮(显示 "中 / EN")
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.language') }))
+    // 现在导航应变英文
+    expect(screen.getByRole('button', { name: translate('en', 'nav.practice') })).toBeInTheDocument()
+    expect(screen.getByText(translate('en', 'practice.guide'))).toBeInTheDocument()
+  })
+
+  it('语言切换后预设连招名也跟随变英文', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.language') }))
+    fireEvent.click(screen.getByRole('button', { name: translate('en', 'nav.combos') }))
+    expect(screen.getByText(translate('en', 'preset.tornadoEmpMeteorBlast'))).toBeInTheDocument()
   })
 })

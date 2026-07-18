@@ -5,24 +5,28 @@ import { ProgressBar } from './ProgressBar'
 import { handleInvokerKey, type InvokerState } from '../domain/invokerEngine'
 import { createSession, pushAction, finishSession, createInitialInvokerState, type SessionState } from '../domain/sessionEngine'
 import { evaluateSession } from '../domain/evaluator'
+import { resolveComboName } from '../domain/resolveComboName'
 import type { TargetCombo, SpellName, SessionMetrics } from '../domain/types'
 import { saveSession, localStorageSessionBackend } from '../domain/sessionStore'
+import { spellName as spellNameFn } from '../domain/i18n'
 import type { KeybindScheme } from '../domain/keymap'
+import type { Locale } from '../domain/i18n'
 
 interface Props {
   combo: TargetCombo | null
   scheme: KeybindScheme
+  locale: Locale
+  t: (key: string) => string
 }
 
 /** 主练习区:持目标连招时启动会话,记录动作,进度条温和提示,宽松继续 */
-export function PlayZone({ combo, scheme }: Props) {
+export function PlayZone({ combo, scheme, locale, t }: Props) {
   const [invoker, setInvoker] = useState<InvokerState>({ orbs: [], slots: [null, null] })
   const [session, setSession] = useState<SessionState | null>(null)
   const [lastTs, setLastTs] = useState(0)
   const [lastCast, setLastCast] = useState<{ type: 'CAST' | 'MISS_CAST'; spell: SpellName | null } | null>(null)
   const [finished, setFinished] = useState<{ status: 'SUCCESS' | 'FAILED'; metrics: SessionMetrics } | null>(null)
 
-  // combo 变化时重置会话 + 应用预切起手
   useEffect(() => {
     if (!combo) {
       setSession(null)
@@ -66,21 +70,21 @@ export function PlayZone({ combo, scheme }: Props) {
   }
 
   if (!combo) {
-    return <p className="text-neutral-400 text-sm">从"连招库"选择一条连招开始练习。</p>
+    return <p className="text-neutral-400 text-sm">{t('practice.guide')}</p>
   }
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
-      <p className="text-amber-300 text-sm">当前连招:{combo.name}</p>
-      <OrbDisplay orbs={invoker.orbs} />
-      <SlotDisplay slots={invoker.slots} />
-      <ProgressBar combo={combo} progress={session?.progress ?? 0} failedSteps={session?.failedSteps ?? []} />
+      <p className="text-amber-300 text-sm">{t('practice.currentCombo')}: {resolveComboName(combo, t)}</p>
+      <OrbDisplay orbs={invoker.orbs} locale={locale} t={t} />
+      <SlotDisplay slots={invoker.slots} locale={locale} t={t} />
+      <ProgressBar combo={combo} progress={session?.progress ?? 0} failedSteps={session?.failedSteps ?? []} locale={locale} t={t} />
 
       <div className="text-sm h-6">
         {lastCast && !finished && (
           <span className={lastCast.type === 'CAST' ? 'text-emerald-400' : 'text-rose-400'}>
-            {lastCast.type === 'CAST' ? '释放' : '空放'}
-            {lastCast.spell ? `: ${lastCast.spell}` : ''}
+            {lastCast.type === 'CAST' ? t('practice.cast') : t('practice.missCast')}
+            {lastCast.spell ? `: ${spellNameFn(locale, lastCast.spell)}` : ''}
           </span>
         )}
       </div>
@@ -88,9 +92,9 @@ export function PlayZone({ combo, scheme }: Props) {
       {finished ? (
         <div className="flex flex-col items-center gap-3">
           <span className={finished.status === 'SUCCESS' ? 'text-emerald-400 font-bold text-lg' : 'text-rose-400 font-bold text-lg'}>
-            {finished.status === 'SUCCESS' ? '✓ 成功' : '✗ 失败(有跑偏步骤)'}
+            {finished.status === 'SUCCESS' ? t('practice.success') : t('practice.failed')}
           </span>
-          <MetricsPanel metrics={finished.metrics} />
+          <MetricsPanel metrics={finished.metrics} t={t} />
           <button
             type="button"
             className="px-3 py-1 text-sm rounded bg-sky-600 hover:bg-sky-500"
@@ -102,12 +106,12 @@ export function PlayZone({ combo, scheme }: Props) {
               setFinished(null)
             }}
           >
-            再练一次
+            {t('practice.again')}
           </button>
         </div>
       ) : (
         <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={endSession}>
-          结束并保存
+          {t('practice.endAndSave')}
         </button>
       )}
     </div>
@@ -115,22 +119,20 @@ export function PlayZone({ combo, scheme }: Props) {
 }
 
 /** 三维评估结果展示(doc.md §4.2) */
-function MetricsPanel({ metrics }: { metrics: SessionMetrics }) {
-  const orbPct = metrics.orbRatio !== null ? `${Math.round(metrics.orbRatio * 100)}%` : 'N/A(失败轮次)'
+function MetricsPanel({ metrics, t }: { metrics: SessionMetrics; t: (key: string) => string }) {
+  const orbPct = metrics.orbRatio !== null ? `${Math.round(metrics.orbRatio * 100)}%` : t('metrics.failedNA')
   return (
     <div className="flex gap-6 text-sm" aria-label="评估结果">
       <div className="flex flex-col items-center">
-        <span className="text-neutral-400 text-xs">切球达成率</span>
-        <span className={metrics.orbRatio !== null ? 'text-amber-300 font-semibold' : 'text-neutral-500'}>
-          {orbPct}
-        </span>
+        <span className="text-neutral-400 text-xs">{t('metrics.orbRatio')}</span>
+        <span className={metrics.orbRatio !== null ? 'text-amber-300 font-semibold' : 'text-neutral-500'}>{orbPct}</span>
       </div>
       <div className="flex flex-col items-center">
-        <span className="text-neutral-400 text-xs">多切次数</span>
+        <span className="text-neutral-400 text-xs">{t('metrics.excess')}</span>
         <span className="text-rose-300 font-semibold">{metrics.excessOrbSwitches}</span>
       </div>
       <div className="flex flex-col items-center">
-        <span className="text-neutral-400 text-xs">时长(ms)</span>
+        <span className="text-neutral-400 text-xs">{t('metrics.duration')}</span>
         <span className="text-sky-300 font-semibold">{Math.round(metrics.durationMs)}</span>
       </div>
     </div>

@@ -1,31 +1,38 @@
 import type { TargetCombo } from '../domain/types'
-import { SPELL_CN } from '../domain/spellNames'
+import { SpellIcon } from './SpellIcon'
+import { spellName as spellNameFn } from '../domain/i18n'
+import type { Locale } from '../domain/i18n'
 
 interface Props {
   combo: TargetCombo
   progress: number
   failedSteps: number[]
+  locale: Locale
+  t: (key: string) => string
 }
 
 /** 目标连招进度条:温和提示当前步,标红跑偏步骤,已完成置灰 */
-export function ProgressBar({ combo, progress, failedSteps }: Props) {
+export function ProgressBar({ combo, progress, failedSteps, locale, t }: Props) {
   return (
-    <div className="flex gap-2 flex-wrap justify-center" aria-label="目标连招进度">
+    <div className="flex gap-2 flex-wrap justify-center" aria-label={t('app.title')}>
       {combo.spells.map((spell, i) => {
         const done = i < progress
         const current = i === progress
         const failed = failedSteps.includes(i)
         const cls = failed
-          ? 'border-rose-500 bg-rose-500/20 text-rose-300'
+          ? 'border-rose-500 bg-rose-500/20'
           : current
-            ? 'border-amber-400 bg-amber-400/25 text-amber-200'
+            ? 'border-amber-400 bg-amber-400/25'
             : done
-              ? 'border-emerald-600 bg-emerald-600/20 text-emerald-300'
-              : 'border-white/15 bg-white/5 text-neutral-400'
+              ? 'border-emerald-600 bg-emerald-600/20'
+              : 'border-white/15 bg-white/5'
         return (
-          <span key={`${spell}-${i}`} className={`px-2 py-1 text-xs rounded border ${cls}`}>
-            {i + 1}. {SPELL_CN[spell]}
-          </span>
+          <div key={`${spell}-${i}`} className={`relative p-1 rounded border ${cls}`} title={spellNameFn(locale, spell)}>
+            <SpellIcon spell={spell} tooltipName={`${i + 1}. ${spellNameFn(locale, spell)}`} size={32} className={done ? 'opacity-60' : ''} />
+            <span className="absolute -top-1 -left-1 text-[10px] bg-neutral-900 rounded-full w-4 h-4 flex items-center justify-center">
+              {i + 1}
+            </span>
+          </div>
         )
       })}
     </div>

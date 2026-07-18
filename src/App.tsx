@@ -5,7 +5,9 @@ import { Dashboard } from './components/Dashboard'
 import { useSettings } from './hooks/useSettings'
 import { useCombos } from './hooks/useCombos'
 import { useSessions } from './hooks/useSessions'
+import { useLocale } from './hooks/useLocale'
 import type { TargetCombo } from './domain/types'
+import type { Locale } from './domain/i18n'
 
 type View = 'practice' | 'combos' | 'dashboard'
 
@@ -13,27 +15,28 @@ function App() {
   const { settings, setSettings, scheme } = useSettings()
   const { combos, addOrUpdate, remove } = useCombos()
   const { sessions, refresh } = useSessions()
+  const { locale, toggle, t } = useLocale()
   const [view, setView] = useState<View>('practice')
   const [activeCombo, setActiveCombo] = useState<TargetCombo | null>(null)
 
   return (
     <div className="h-full w-full bg-neutral-950 text-neutral-100 flex flex-col items-center gap-6 py-8">
       <header className="flex flex-col items-center gap-3">
-        <h1 className="text-2xl font-bold">Kombo — 卡尔连招模拟器</h1>
+        <h1 className="text-2xl font-bold">{t('app.title')}</h1>
         <nav className="flex gap-2 text-sm">
           <button
             type="button"
             className={`px-3 py-1 rounded border ${view === 'practice' ? 'bg-white/15 border-white/30' : 'border-white/15 hover:bg-white/5'}`}
             onClick={() => setView('practice')}
           >
-            练习
+            {t('nav.practice')}
           </button>
           <button
             type="button"
             className={`px-3 py-1 rounded border ${view === 'combos' ? 'bg-white/15 border-white/30' : 'border-white/15 hover:bg-white/5'}`}
             onClick={() => setView('combos')}
           >
-            连招库
+            {t('nav.combos')}
           </button>
           <button
             type="button"
@@ -43,12 +46,12 @@ function App() {
               setView('dashboard')
             }}
           >
-            复盘
+            {t('nav.dashboard')}
           </button>
         </nav>
       </header>
 
-      {view === 'practice' && <PlayZone combo={activeCombo} scheme={scheme} />}
+      {view === 'practice' && <PlayZone combo={activeCombo} scheme={scheme} locale={locale} t={t} />}
 
       {view === 'combos' && (
         <ComboManager
@@ -59,12 +62,14 @@ function App() {
             setActiveCombo(c)
             setView('practice')
           }}
+          locale={locale}
+          t={t}
         />
       )}
 
-      {view === 'dashboard' && <Dashboard sessions={sessions} />}
+      {view === 'dashboard' && <Dashboard sessions={sessions} locale={locale} t={t} />}
 
-      <SettingsBar settings={settings} setSettings={setSettings} />
+      <SettingsBar settings={settings} setSettings={setSettings} locale={locale} toggleLocale={toggle} t={t} />
     </div>
   )
 }
@@ -72,9 +77,15 @@ function App() {
 function SettingsBar({
   settings,
   setSettings,
+  locale,
+  toggleLocale,
+  t,
 }: {
   settings: ReturnType<typeof useSettings>['settings']
   setSettings: ReturnType<typeof useSettings>['setSettings']
+  locale: Locale
+  toggleLocale: () => void
+  t: (key: string) => string
 }) {
   return (
     <div className="flex gap-2 items-center text-xs">
@@ -83,7 +94,7 @@ function SettingsBar({
         className="px-2 py-1 rounded border border-white/20 hover:bg-white/10"
         onClick={() => setSettings({ ...settings, iconTheme: settings.iconTheme === 'DOTA1' ? 'DOTA2' : 'DOTA1' })}
       >
-        图标: {settings.iconTheme}
+        {t('settings.iconTheme')}: {t(`settings.iconTheme.${settings.iconTheme}`)}
       </button>
       <button
         type="button"
@@ -95,10 +106,18 @@ function SettingsBar({
             keybindScheme: settings.keybindScheme === 'LEGACY' ? 'DOTA2' : 'LEGACY',
           })
         }
-        aria-label={`键位: ${settings.keybindScheme}`}
+        aria-label={`${t('settings.keybind')}: ${settings.keybindScheme}`}
       >
-        键位: {settings.keybindScheme}
-        {settings.iconTheme === 'DOTA1' && ' (锁定 LEGACY)'}
+        {t('settings.keybind')}: {settings.keybindScheme}
+        {settings.iconTheme === 'DOTA1' && ` ${t('settings.keybind.lockedLegacy')}`}
+      </button>
+      <button
+        type="button"
+        className="px-2 py-1 rounded border border-white/20 hover:bg-white/10"
+        onClick={toggleLocale}
+        aria-label={t('settings.language')}
+      >
+        {locale === 'zh' ? '中 / EN' : 'EN / 中'}
       </button>
     </div>
   )

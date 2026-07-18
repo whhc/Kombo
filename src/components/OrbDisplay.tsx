@@ -1,26 +1,28 @@
 import type { Element } from '../domain/types'
-import { ELEMENT_INFO } from '../domain/orbDisplay'
+import { ElementIcon } from './ElementIcon'
+import { elementName } from '../domain/i18n'
+import type { Locale } from '../domain/i18n'
 
-/** 头顶元素球的 UI 展示:固定 3 个槽位,按顺序填充,空槽显示占位 */
-export function OrbDisplay({ orbs }: { orbs: Element[] }) {
+interface Props {
+  orbs: Element[]
+  locale: Locale
+  t: (key: string) => string
+}
+
+/** 头顶元素球:固定 3 槽位,用元素图标,空槽占位 */
+export function OrbDisplay({ orbs, locale, t }: Props) {
   const slots: (Element | null)[] = [orbs[0] ?? null, orbs[1] ?? null, orbs[2] ?? null]
 
   return (
-    <div className="flex gap-3" aria-label="元素球">
+    <div className="flex gap-3" aria-label={t('app.title')}>
       {slots.map((orb, i) =>
         orb ? (
-          <div
-            key={i}
-            className={`h-16 w-16 rounded-full border-2 border-white/30 ${ELEMENT_INFO[orb].tw} flex items-center justify-center text-white text-sm font-bold`}
-            aria-label={ELEMENT_INFO[orb].name}
-          >
-            {orb}
-          </div>
+          <ElementIcon key={i} element={orb} tooltipName={elementName(locale, orb)} />
         ) : (
           <div
             key={i}
-            className="h-16 w-16 rounded-full border-2 border-dashed border-white/15 bg-white/5"
-            aria-label="空槽"
+            className="h-14 w-14 rounded-full border-2 border-dashed border-white/15 bg-white/5"
+            aria-label={t('orb.emptySlot')}
           />
         ),
       )}

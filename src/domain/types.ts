@@ -35,6 +35,8 @@ export interface ActionNode {
 /** 目标连招(doc.md §4.1 TargetCombo) */
 export interface TargetCombo {
   comboId: string
+  /** 展示名。预设连招用 i18n key(以 "preset." 开头,见 resolveComboName);
+   *  用户自建为原样文本。 */
   name: string
   /** 有序技能序列,允许重复 */
   spells: SpellName[]

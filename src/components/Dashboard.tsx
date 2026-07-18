@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
 import type { ExecutionSession } from '../domain/types'
 import { RhythmScatter } from './RhythmScatter'
+import type { Locale } from '../domain/i18n'
 
 interface Props {
   sessions: ExecutionSession[]
+  locale: Locale
+  t: (key: string) => string
 }
 
 type Range = 'all' | 'today' | '7d' | '30d'
@@ -11,7 +14,7 @@ type Range = 'all' | 'today' | '7d' | '30d'
 const DAY_MS = 24 * 60 * 60 * 1000
 
 /** 数据复盘区(doc.md §5.1/§5.2):历史会话列表 + 节奏散点图 */
-export function Dashboard({ sessions }: Props) {
+export function Dashboard({ sessions, t }: Props) {
   const [range, setRange] = useState<Range>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -27,16 +30,19 @@ export function Dashboard({ sessions }: Props) {
   if (sessions.length === 0) {
     return (
       <div className="text-neutral-400 text-sm flex flex-col items-center gap-2">
-        <p>还没有练习记录。</p>
-        <p>先去"练习"完成一轮吧。</p>
+        <p>{t('dashboard.empty')}</p>
+        <p>{t('dashboard.emptyHint')}</p>
       </div>
     )
   }
 
+  const rangeLabel = (r: Range) =>
+    r === 'all' ? t('dashboard.range.all') : r === 'today' ? t('dashboard.range.today') : r === '7d' ? t('dashboard.range.7d') : t('dashboard.range.30d')
+
   return (
     <div className="flex flex-col gap-4 w-full max-w-3xl">
       <div className="flex gap-2 items-center">
-        <span className="text-sm text-neutral-400">时间范围:</span>
+        <span className="text-sm text-neutral-400">{t('dashboard.timeRange')}</span>
         {(['all', 'today', '7d', '30d'] as Range[]).map((r) => (
           <button
             key={r}
@@ -44,7 +50,7 @@ export function Dashboard({ sessions }: Props) {
             className={`px-2 py-0.5 text-xs rounded border ${range === r ? 'bg-white/15 border-white/30' : 'border-white/15 hover:bg-white/5'}`}
             onClick={() => setRange(r)}
           >
-            {r === 'all' ? '全部' : r === 'today' ? '今日' : r === '7d' ? '近7天' : '近30天'}
+            {rangeLabel(r)}
           </button>
         ))}
       </div>
@@ -60,17 +66,19 @@ export function Dashboard({ sessions }: Props) {
               {s.status === 'SUCCESS' ? '✓' : '✗'} {new Date(s.startTime).toLocaleString()}
             </span>
             <span className="text-xs text-neutral-400">
-              {s.metrics ? `达成率 ${s.metrics.orbRatio !== null ? Math.round(s.metrics.orbRatio * 100) + '%' : 'N/A'} · ${Math.round(s.metrics.durationMs)}ms · 多切${s.metrics.excessOrbSwitches}` : '未评估'}
+              {s.metrics
+                ? `${t('dashboard.ratio')} ${s.metrics.orbRatio !== null ? Math.round(s.metrics.orbRatio * 100) + '%' : 'N/A'} · ${Math.round(s.metrics.durationMs)}ms · ${t('dashboard.excess')}${s.metrics.excessOrbSwitches}`
+                : t('dashboard.notEvaluated')}
             </span>
           </li>
         ))}
-        {filtered.length === 0 && <li className="text-neutral-500 text-sm">该时间范围内无记录。</li>}
+        {filtered.length === 0 && <li className="text-neutral-500 text-sm">{t('dashboard.noRecordInRange')}</li>}
       </ul>
 
       {selected && (
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm text-neutral-300">按键节奏散点图</h3>
-          <RhythmScatter actions={selected.actions} />
+          <h3 className="text-sm text-neutral-300">{t('dashboard.rhythmTitle')}</h3>
+          <RhythmScatter actions={selected.actions} t={t} />
         </div>
       )}
     </div>

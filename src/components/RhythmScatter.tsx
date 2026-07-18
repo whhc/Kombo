@@ -12,10 +12,11 @@ const COLOR_BY_TYPE: Record<ActionNode['actionType'], string> = {
 
 interface Props {
   actions: ActionNode[]
+  t: (key: string) => string
 }
 
 /** 按键节奏散点图(doc.md §5.2):X 相对时间,Y 两次按键间隔 */
-export function RhythmScatter({ actions }: Props) {
+export function RhythmScatter({ actions, t }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const chartRef = useRef<echarts.ECharts | null>(null)
 
@@ -48,11 +49,11 @@ export function RhythmScatter({ actions }: Props) {
       backgroundColor: 'transparent',
       grid: { left: 50, right: 20, top: 30, bottom: 40 },
       legend: { textStyle: { color: '#cbd5e1' }, top: 0 },
-      xAxis: { type: 'value', name: '相对时间(ms)', nameTextStyle: { color: '#94a3b8' }, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
-      yAxis: { type: 'value', name: '间隔(ms)', nameTextStyle: { color: '#94a3b8' }, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+      xAxis: { type: 'value', name: t('scatter.xAxis'), nameTextStyle: { color: '#94a3b8' }, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
+      yAxis: { type: 'value', name: t('scatter.yAxis'), nameTextStyle: { color: '#94a3b8' }, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#334155' } } },
       series,
     })
-  }, [actions])
+  }, [actions, t])
 
   return <div ref={ref} className="w-full h-72" aria-label="按键节奏散点图" />
 }

@@ -1,26 +1,47 @@
 import type { SpellName } from '../domain/types'
+import { SpellIcon } from './SpellIcon'
+import { spellName as spellNameFn } from '../domain/i18n'
+import type { Locale } from '../domain/i18n'
 
-/** 双技能槽位 UI:[第一顺位 D, 第二顺位 F] */
-export function SlotDisplay({ slots }: { slots: [SpellName | null, SpellName | null] }) {
+interface Props {
+  slots: [SpellName | null, SpellName | null]
+  locale: Locale
+  t: (key: string) => string
+}
+
+/** 双技能槽位:[第一顺位 D, 第二顺位 F] */
+export function SlotDisplay({ slots, locale, t }: Props) {
   return (
-    <div className="flex gap-3" aria-label="技能槽位">
-      <Slot label="D · 第一顺位" spell={slots[0]} />
-      <Slot label="F · 第二顺位" spell={slots[1]} />
+    <div className="flex gap-4" aria-label={t('app.title')}>
+      <Slot label={t('slot.first')} spell={slots[0]} locale={locale} t={t} />
+      <Slot label={t('slot.second')} spell={slots[1]} locale={locale} t={t} />
     </div>
   )
 }
 
-function Slot({ label, spell }: { label: string; spell: SpellName | null }) {
+function Slot({
+  label,
+  spell,
+  locale,
+  t,
+}: {
+  label: string
+  spell: SpellName | null
+  locale: Locale
+  t: (key: string) => string
+}) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <div
-        className={`h-20 w-20 rounded-lg border-2 flex items-center justify-center text-sm font-semibold ${
-          spell ? 'border-amber-400 bg-amber-400/15 text-amber-200' : 'border-dashed border-white/15 bg-white/5 text-neutral-500'
-        }`}
-        aria-label={spell ? `槽位 ${label}: ${spell}` : `槽位 ${label}: 空`}
-      >
-        {spell ?? '—'}
-      </div>
+      {spell ? (
+        <SpellIcon spell={spell} tooltipName={spellNameFn(locale, spell)} size={56} />
+      ) : (
+        <div
+          className="h-14 w-14 rounded-lg border-2 border-dashed border-white/15 bg-white/5 flex items-center justify-center text-neutral-600 text-xl"
+          aria-label={`${label}: ${t('slot.empty')}`}
+        >
+          —
+        </div>
+      )}
       <span className="text-xs text-neutral-500">{label}</span>
     </div>
   )
