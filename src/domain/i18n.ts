@@ -39,6 +39,10 @@ const UI_ZH: Dict = {
   'practice.again': '再练一次',
   'practice.pauseLoop': '暂停循环',
   'practice.autoNext': '0.5s 后自动开始下一轮…',
+  'practice.freePlay': '自由练习',
+  'practice.quit': '退出',
+  'practice.reset': '重置',
+  'practice.spellHistory': '释放历史',
 
   'combo.library': '连招库',
   'combo.new': '新建连招',
@@ -114,6 +118,10 @@ const UI_EN: Dict = {
   'practice.again': 'Try again',
   'practice.pauseLoop': 'Pause loop',
   'practice.autoNext': 'Next round in 0.5s…',
+  'practice.freePlay': 'Free Play',
+  'practice.quit': 'Quit',
+  'practice.reset': 'Reset',
+  'practice.spellHistory': 'Spell history',
 
   'combo.library': 'Combo Library',
   'combo.new': 'New combo',

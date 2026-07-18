@@ -21,9 +21,26 @@ const comboWithPre: TargetCombo = {
 const props = { locale: ZH_LOCALE, t: tZh, iconTheme: DOTA2_THEME }
 
 describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
-  it('未选连招时显示引导提示', () => {
+  it('combo=null 时为自由模式(显示 SpellHistory,无进度条)', () => {
     render(<PlayZone combo={null} scheme={'LEGACY'} {...props} />)
-    expect(screen.getByText(tZh('practice.guide'))).toBeInTheDocument()
+    // 自由模式:无目标连招引导,直接可按键
+    expect(screen.getByText(tZh('practice.freePlay'))).toBeInTheDocument()
+    // 有重置按钮而非"结束并保存"
+    expect(screen.getByRole('button', { name: tZh('practice.reset') })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: tZh('practice.endAndSave') })).not.toBeInTheDocument()
+  })
+
+  it('内嵌模式(onQuit 存在):显示 Quit 按钮,不自动保存不循环', () => {
+    const onQuit = vi.fn()
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} onQuit={onQuit} {...props} />)
+    // 有 Quit 按钮
+    expect(screen.getByRole('button', { name: tZh('practice.quit') })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: tZh('practice.endAndSave') })).not.toBeInTheDocument()
+    // 释放全部技能后不应自动结束(内嵌模式不保存)
+    fireEvent.keyDown(window, { key: 'x' })
+    fireEvent.keyDown(window, { key: 'c' })
+    // 没有显示 SUCCESS/FAILED,因为不自动结束
+    expect(screen.queryByText(tZh('practice.success'))).not.toBeInTheDocument()
   })
 
   it('选中连招后显示连招名(翻译后的预设名)与图标', () => {

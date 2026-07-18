@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { OrbDisplay } from './OrbDisplay'
 import { SlotDisplay } from './SlotDisplay'
 import { ProgressBar } from './ProgressBar'
+import { SpellHistory } from './SpellHistory'
 import { handleInvokerKey, type InvokerState } from '../domain/invokerEngine'
 import { createSession, pushAction, finishSession, createInitialInvokerState, type SessionState } from '../domain/sessionEngine'
 import { evaluateSession } from '../domain/evaluator'
@@ -19,16 +20,24 @@ interface Props {
   iconTheme: IconTheme
   locale: Locale
   t: (key: string) => string
+  /** 内嵌模式:退出(不保存)回调;无则使用独立模式(自动保存+循环) */
+  onQuit?: () => void
 }
 
-/** 主练习区:持目标连招时启动会话,记录动作,进度条温和提示,宽松继续 */
-export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
+/**
+ * 主练习区。三种模式按 props 组合:
+ *   combo=null + 无onQuit → 自由模式(SpellHistory FIFO10,重置)
+ *   combo非空 + 有onQuit → 内嵌模式(Quit退出,不保存不循环)
+ *   combo非空 + 无onQuit → 独立模式(自动保存+循环,当前行为)
+ */
+export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit }: Props) {
   const [invoker, setInvoker] = useState<InvokerState>({ orbs: [], slots: [null, null] })
   const [session, setSession] = useState<SessionState | null>(null)
   const [loopPaused, setLoopPaused] = useState(false)
   const [lastTs, setLastTs] = useState(0)
   const [lastCast, setLastCast] = useState<{ type: 'CAST' | 'MISS_CAST'; spell: SpellName | null } | null>(null)
   const [finished, setFinished] = useState<{ status: 'SUCCESS' | 'FAILED'; metrics: SessionMetrics } | null>(null)
+  const [spellHistory, setSpellHistory] = useState<SpellName[]>([])
 
   useEffect(() => {
     if (!combo) {
@@ -36,13 +45,14 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
       setInvoker({ orbs: [], slots: [null, null] })
       setFinished(null)
       setLoopPaused(false)
+      setSpellHistory([])
       return
     }
     resetRound(combo)
+    setSpellHistory([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [combo])
 
-  /** 重置一轮:新会话 + 应用预切 + 清状态 */
   function resetRound(c: TargetCombo) {
     setSession(createSession(c))
     setInvoker(createInitialInvokerState(c))
@@ -51,37 +61,18 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
     setFinished(null)
   }
 
-  // 自动循环:完成后未暂停,0.5s 后自动开始下一轮
+  // 自动循环(仅独立模式:有combo,无onQuit,有finished,未暂停)
   useEffect(() => {
+    if (!combo || onQuit) return
     if (!finished || loopPaused || !combo) return
     const timer = setTimeout(() => resetRound(combo), 500)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finished, loopPaused, combo])
+  }, [finished, loopPaused, combo, onQuit])
 
-  useEffect(() => {
-    if (!combo || !session || finished) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toUpperCase()
-      // 用 Date.now()(Unix epoch 毫秒),而非 performance.now()(页面加载后相对值),
-      // 保证 Dashboard 的 new Date(startTime) 显示真实日期
-      const now = Date.now()
-      const result = handleInvokerKey(invoker, key, now, lastTs, scheme)
-      if (result.action) {
-        setInvoker(result.state)
-        setLastTs(now)
-        if (result.action.actionType === 'CAST' || result.action.actionType === 'MISS_CAST') {
-          setLastCast({ type: result.action.actionType, spell: result.action.spellName ?? null })
-        }
-        setSession((prev) => (prev ? pushAction(prev, result.action!, combo) : prev))
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [combo, session, invoker, lastTs, scheme, finished])
-
+  // 自动保存(仅独立模式:combo且无onQuit,且completed)
   const endSession = () => {
-    if (!combo || !session) return
+    if (!combo || !session || onQuit) return
     const result = finishSession(session, combo, Date.now())
     const metrics = evaluateSession(result, combo)
     const withMetrics = { ...result, metrics }
@@ -89,18 +80,69 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
     setFinished({ status: result.status, metrics })
   }
 
-  // 自动保存:目标技能全部按序释放完毕(progress 达 spells.length)时自动结束会话
   useEffect(() => {
-    if (session?.completed && !finished) {
-      endSession()
-    }
-    // endSession 依赖 session/combo,但 completed 变化才需触发;lint 允许只盯关键状态
+    if (!combo || onQuit) return
+    if (session?.completed && !finished) endSession()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.completed, finished])
+  }, [session?.completed, finished, combo, onQuit])
 
+  useEffect(() => {
+    // finished 时停止按键:独立模式显示结果后不可操作;内嵌模式 finished 永为 null 不收影响
+    if (finished && !onQuit) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toUpperCase()
+      const now = Date.now()
+      const result = handleInvokerKey(invoker, key, now, lastTs, scheme)
+      if (!result.action) return
+      const action = result.action
+      setInvoker(result.state)
+      setLastTs(now)
+
+      if (action.actionType === 'CAST' || action.actionType === 'MISS_CAST') {
+        setLastCast({ type: action.actionType, spell: action.spellName ?? null })
+        if (action.actionType === 'CAST' && action.spellName) {
+          setSpellHistory((prev) => [...prev.slice(-9), action.spellName!])
+        }
+      }
+
+      if (combo && session) {
+        setSession((prev) => (prev ? pushAction(prev, action, combo) : prev))
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [combo, session, invoker, lastTs, scheme, onQuit, finished])
+
+  // ─── 自由模式(combo=null) ───
   if (!combo) {
-    return <p className="text-neutral-400 text-sm">{t('practice.guide')}</p>
+    return (
+      <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
+        <p className="text-amber-300 text-sm">{t('practice.freePlay')}</p>
+        <OrbDisplay orbs={invoker.orbs} theme={iconTheme} locale={locale} t={t} />
+        <SlotDisplay slots={invoker.slots} scheme={scheme} theme={iconTheme} locale={locale} t={t} />
+        <div className="text-sm h-6">
+          {lastCast && (
+            <span className={lastCast.type === 'CAST' ? 'text-emerald-400' : 'text-rose-400'}>
+              {lastCast.type === 'CAST' ? t('practice.cast') : t('practice.missCast')}
+              {lastCast.spell ? `: ${spellNameFn(locale, iconTheme, lastCast.spell)}` : ''}
+            </span>
+          )}
+        </div>
+        <SpellHistory spells={spellHistory} theme={iconTheme} locale={locale} />
+        <button
+          type="button"
+          className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10"
+          onClick={() => setSpellHistory([])}
+        >
+          {t('practice.reset')}
+        </button>
+      </div>
+    )
   }
+
+  // ─── 组合模式(独立/内嵌) ───
+  const showQuit = onQuit !== undefined
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
@@ -118,29 +160,30 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
         )}
       </div>
 
-      {finished ? (
+      <SpellHistory spells={spellHistory} theme={iconTheme} locale={locale} />
+
+      {showQuit ? (
+        <button
+          type="button"
+          className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10"
+          onClick={onQuit}
+        >
+          {t('practice.quit')}
+        </button>
+      ) : finished ? (
         <div className="flex flex-col items-center gap-3">
           <span className={finished.status === 'SUCCESS' ? 'text-emerald-400 font-bold text-lg' : 'text-rose-400 font-bold text-lg'}>
             {finished.status === 'SUCCESS' ? t('practice.success') : t('practice.failed')}
           </span>
           <MetricsPanel metrics={finished.metrics} t={t} />
           {loopPaused ? (
-            // 暂停循环:手动"再练一次"
-            <button
-              type="button"
-              className="px-3 py-1 text-sm rounded bg-sky-600 hover:bg-sky-500"
-              onClick={() => combo && resetRound(combo)}
-            >
+            <button type="button" className="px-3 py-1 text-sm rounded bg-sky-600 hover:bg-sky-500" onClick={() => combo && resetRound(combo)}>
               {t('practice.again')}
             </button>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <span className="text-xs text-neutral-400">{t('practice.autoNext')}</span>
-              <button
-                type="button"
-                className="px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10"
-                onClick={() => setLoopPaused(true)}
-              >
+              <button type="button" className="px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setLoopPaused(true)}>
                 {t('practice.pauseLoop')}
               </button>
             </div>
@@ -155,7 +198,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t }: Props) {
   )
 }
 
-/** 三维评估结果展示(doc.md §4.2) */
+/** 三维评估结果展示 */
 function MetricsPanel({ metrics, t }: { metrics: SessionMetrics; t: (key: string) => string }) {
   const orbPct = metrics.orbRatio !== null ? `${Math.round(metrics.orbRatio * 100)}%` : t('metrics.failedNA')
   return (
