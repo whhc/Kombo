@@ -81,7 +81,7 @@ function App() {
         />
       )}
 
-      {view === 'dashboard' && <Dashboard sessions={sessions} locale={locale} t={t} />}
+      {view === 'dashboard' && <Dashboard sessions={sessions} combos={combos} iconTheme={settings.iconTheme} locale={locale} t={t} />}
 
       <SettingsBar settings={settings} setSettings={setSettings} locale={locale} toggleLocale={toggle} t={t} />
     </div>
