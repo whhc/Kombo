@@ -23,10 +23,12 @@ interface Props {
   showOptimalPath: boolean
   /** 切换显示 */
   onToggleOptimalPath: () => void
+  /** 是否开启音效 */
+  soundEnabled: boolean
 }
 
 /** 连招列表 + 新建/编辑 + 内嵌练习(practicing) */
-export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, locale, t, showOptimalPath, onToggleOptimalPath }: Props) {
+export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, locale, t, showOptimalPath, onToggleOptimalPath, soundEnabled }: Props) {
   const [editing, setEditing] = useState<TargetCombo | null>(null)
   const [creating, setCreating] = useState(false)
   const [practicing, setPracticing] = useState<TargetCombo | null>(null)
@@ -65,6 +67,7 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
         onQuit={() => setPracticing(null)}
         showOptimalPath={showOptimalPath}
         onToggleOptimalPath={onToggleOptimalPath}
+        soundEnabled={soundEnabled}
       />
     )
   }

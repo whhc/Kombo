@@ -1,8 +1,15 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { PlayZone } from './PlayZone'
 import { ZH_LOCALE, tZh, DOTA2_THEME, DOTA1_THEME } from '../test/i18nHelpers'
 import type { TargetCombo } from '../domain/types'
+
+// 拦截音效副作用(jsdom 无 Audio),验证注入点调用
+vi.mock('../sound/soundManager', () => ({
+  playSpellSound: vi.fn(),
+  playInvokeSound: vi.fn(),
+}))
+import { playSpellSound, playInvokeSound } from '../sound/soundManager'
 
 const shortCombo: TargetCombo = {
   comboId: 'short',
@@ -149,5 +156,42 @@ describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
     expect(screen.getByText(/X · 龙卷风/)).toBeInTheDocument()
     // 不应出现误导的 "D · 第一顺位"
     expect(screen.queryByText(/D · 第一顺位/)).not.toBeInTheDocument()
+  })
+})
+
+describe('PlayZone — 音效注入', () => {
+  beforeEach(() => {
+    vi.mocked(playSpellSound).mockClear()
+    vi.mocked(playInvokeSound).mockClear()
+  })
+
+  it('CAST 释放技能时调用 playSpellSound(传入 spell 与 soundEnabled)', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} locale={ZH_LOCALE} t={tZh} iconTheme={DOTA2_THEME} soundEnabled />)
+    fireEvent.keyDown(window, { key: 'x' }) // Tornado 已预切,释放即 CAST
+    expect(playSpellSound).toHaveBeenCalledWith('Tornado', true)
+    expect(playInvokeSound).not.toHaveBeenCalled() // 释放不触发合成音
+  })
+
+  it('soundEnabled=false 时不播音(仍传入 false)', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} locale={ZH_LOCALE} t={tZh} iconTheme={DOTA2_THEME} soundEnabled={false} />)
+    fireEvent.keyDown(window, { key: 'x' }) // CAST Tornado
+    expect(playSpellSound).toHaveBeenCalledWith('Tornado', false)
+  })
+
+  it('按 R 成功合成技能时调用 playInvokeSound', () => {
+    render(<PlayZone combo={null} scheme={'LEGACY'} locale={ZH_LOCALE} t={tZh} iconTheme={DOTA2_THEME} soundEnabled />)
+    // 切出 Q Q Q → 急速冷却,按 R 合成
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'q' })
+    fireEvent.keyDown(window, { key: 'r' }) // 合成成功
+    expect(playInvokeSound).toHaveBeenCalledWith(true)
+  })
+
+  it('MISS_CAST 不触发技能音', () => {
+    render(<PlayZone combo={null} scheme={'DOTA2'} locale={ZH_LOCALE} t={tZh} iconTheme={DOTA2_THEME} soundEnabled />)
+    // 空槽位按 D → MISS_CAST(无技能可放)
+    fireEvent.keyDown(window, { key: 'd' })
+    expect(playSpellSound).not.toHaveBeenCalled()
   })
 })

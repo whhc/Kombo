@@ -81,12 +81,19 @@ export function Dashboard({ sessions, combos, iconTheme, locale, t }: Props) {
             ))}
           </div>
         </div>
-        {successRate !== null && (
+        {successRate !== null ? (
           <span
             className={`px-2 py-0.5 text-xs rounded border ${successRate >= 0.8 ? 'border-emerald-500/50 text-emerald-300 bg-emerald-900/20' : successRate >= 0.5 ? 'border-amber-500/50 text-amber-300 bg-amber-900/20' : 'border-rose-500/50 text-rose-300 bg-rose-900/20'}`}
             title={t('dashboard.successRateHint')}
           >
             {t('dashboard.successRate')}: {Math.round(successRate * 100)}% ({filtered.filter((s) => s.status === 'SUCCESS').length}/{filtered.length})
+          </span>
+        ) : (
+          <span
+            className="px-2 py-0.5 text-xs rounded border border-neutral-600/50 text-neutral-400 bg-neutral-800/20"
+            title={t('dashboard.successRateHint')}
+          >
+            {t('dashboard.successRateUnknown')}
           </span>
         )}
       </div>

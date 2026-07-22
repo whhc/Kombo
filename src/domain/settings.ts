@@ -7,6 +7,8 @@ export interface UserSettings {
   keybindScheme: KeybindScheme
   /** 是否显示连招的最优键序提示(求解器输出);默认 true */
   showOptimalPath: boolean
+  /** 是否开启音效(技能释放/合成);默认 true */
+  soundEnabled: boolean
 }
 
 /**
@@ -23,4 +25,5 @@ export const DEFAULT_SETTINGS: UserSettings = {
   iconTheme: 'DOTA2',
   keybindScheme: 'DOTA2',
   showOptimalPath: true,
+  soundEnabled: true,
 }

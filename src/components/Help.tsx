@@ -59,6 +59,7 @@ export function Help({ iconTheme, locale, t }: Props) {
           <li>{t('help.practice.finished')}</li>
           <li>{t('help.practice.space')}</li>
           <li>{t('help.practice.preCast')}</li>
+          <li>{t('help.practice.sound')}</li>
         </ul>
       </Section>
 

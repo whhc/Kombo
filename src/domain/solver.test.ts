@@ -87,6 +87,60 @@ describe('solver — 球序复用 vs 损失', () => {
   })
 })
 
+describe('solver — 切球顺序三级裁决(重复按键分组)', () => {
+  // 主代价(切球数)相同时,按 (相邻切换数, 配方不匹配数) 字典序裁决,
+  // 使重复按键尽量放一起,符合人体工学。
+
+  it('ChaosMeteor(EEW) 单技能:EEW 而非 EWE/WEE(重复 E 分组,跟随配方)', () => {
+    // EEW: 相邻切换 1(E→E→W), 配方不匹配 0 = 完全匹配 → 最优
+    // EWE: 相邻切换 2(E→W→E) → 次之
+    // WEE: 相邻切换 1, 但配方不匹配 2 → tertiary 输给 EEW
+    const r = solveCombo(comboOf(['ChaosMeteor']))
+    const orbSeq = r!.steps.filter((s) => s.kind === 'ORB').map((s) => (s as any).key).join('')
+    expect(orbSeq).toBe('EEW')
+  })
+
+  it('Tornado(WWQ) 单技能:WWQ(重复 W 分组,跟随配方)', () => {
+    const r = solveCombo(comboOf(['Tornado']))
+    const orbSeq = r!.steps.filter((s) => s.kind === 'ORB').map((s) => (s as any).key).join('')
+    expect(orbSeq).toBe('WWQ')
+  })
+
+  it('ChaosMeteor → DeafeningBlast:首段切球 EEW 分组(用户报告的 bug)', () => {
+    // 原 bug:输出 EWER...(EWE),期望 EEWR...(EEW)
+    const r = solveCombo(comboOf(['ChaosMeteor', 'DeafeningBlast']))
+    expect(r).not.toBeNull()
+    const orbs = r!.steps.filter((s) => s.kind === 'ORB').map((s) => (s as any).key as 'Q' | 'W' | 'E')
+    // 合 ChaosMeteor 的首段 3 球应排成 E,E,W(分组)
+    expect(orbs.slice(0, 3).join('')).toBe('EEW')
+    // 主代价不变:ChaosMeteor 3 + DeafeningBlast 复用
+    expect(r!.orbSwitches).toBeLessThanOrEqual(5)
+  })
+
+  it('EMP(WWW) 单技能:WWW(全相同,无分组歧义)', () => {
+    const r = solveCombo(comboOf(['EMP']))
+    const orbSeq = r!.steps.filter((s) => s.kind === 'ORB').map((s) => (s as any).key).join('')
+    expect(orbSeq).toBe('WWW')
+  })
+
+  it('ColdSnap(QQQ) → SunStrike(EEE):全相同元素内分组,跨段重置', () => {
+    // QQQ 然后 EEE:每段内部全相同(secondary=0),段间切换不计(Q→E 跨 CAST 边界,重置 prevOrb)
+    const r = solveCombo(comboOf(['ColdSnap', 'SunStrike']))
+    const orbSeq = r!.steps.filter((s) => s.kind === 'ORB').map((s) => (s as any).key).join('')
+    expect(orbSeq).toBe('QQQEEE')
+    expect(r!.orbSwitches).toBe(6)
+  })
+
+  it('裁决不破坏球序复用:Tornado→EMP 仍 QWWW(primary 优先于分组)', () => {
+    // Tornado(WWQ)→EMP(WWW):QWW 残留让 EMP 只切 1 球(primary=4),
+    // 即使 WWQ/WWQ 的分组更优,primary 决定 QWWW 胜出。
+    const r = solveCombo(comboOf(['Tornado', 'EMP']))
+    const orbSeq = r!.steps.filter((s) => s.kind === 'ORB').map((s) => (s as any).key).join('')
+    expect(orbSeq).toBe('QWWW')
+    expect(r!.orbSwitches).toBe(4)
+  })
+})
+
 describe('solver — 多技能衔接', () => {
   it('经典 4 连招能解出非平凡最短切球数', () => {
     // SunStrike(EEE) → ChaosMeteor(EEW) → DeafeningBlast(QWE) → ColdSnap(QQQ)

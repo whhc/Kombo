@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PlayZone } from './components/PlayZone'
 import { ComboManager } from './components/ComboManager'
 import { Dashboard } from './components/Dashboard'
@@ -8,6 +8,8 @@ import { useSettings } from './hooks/useSettings'
 import { useCombos } from './hooks/useCombos'
 import { useSessions } from './hooks/useSessions'
 import { useLocale } from './hooks/useLocale'
+import { preloadSounds } from './sound/soundManager'
+import { Volume2, VolumeX } from 'lucide-react'
 import type { Locale } from './domain/i18n'
 
 type View = 'practice' | 'combos' | 'dashboard' | 'help'
@@ -18,6 +20,9 @@ function App() {
   const { sessions, refresh } = useSessions()
   const { locale, toggle, t } = useLocale()
   const [view, setView] = useState<View>('practice')
+
+  // 挂载时预加载全部音效(浏览器提前解码,避免首次播放延迟)
+  useEffect(() => preloadSounds(), [])
 
   return (
     <div className="h-full w-full bg-neutral-950 text-neutral-100 flex flex-col items-center gap-6 py-8">
@@ -74,7 +79,7 @@ function App() {
       </header>
 
       {view === 'practice' && (
-        <PlayZone combo={null} scheme={scheme} iconTheme={settings.iconTheme} locale={locale} t={t} />
+        <PlayZone combo={null} scheme={scheme} iconTheme={settings.iconTheme} locale={locale} t={t} soundEnabled={settings.soundEnabled} />
       )}
 
       {view === 'combos' && (
@@ -90,6 +95,7 @@ function App() {
           onToggleOptimalPath={() =>
             setSettings((prev) => ({ ...prev, showOptimalPath: !prev.showOptimalPath }))
           }
+          soundEnabled={settings.soundEnabled}
         />
       )}
 
@@ -139,6 +145,16 @@ function SettingsBar({
         aria-label={t('settings.language')}
       >
         {locale === 'zh' ? '中 / EN' : 'EN / 中'}
+      </button>
+      <button
+        type="button"
+        className="px-2 py-1 rounded border border-white/20 hover:bg-white/10"
+        onClick={() =>
+          setSettings((prev) => ({ ...prev, soundEnabled: !prev.soundEnabled }))
+        }
+        aria-label={settings.soundEnabled ? t('settings.soundOff') : t('settings.soundOn')}
+      >
+        {settings.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
       </button>
     </div>
   )

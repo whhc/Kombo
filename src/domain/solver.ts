@@ -20,6 +20,12 @@ import type { KeybindScheme } from './keymap'
  *   - 这与 doc.md §4.2 维度②口径一致
  *   - 不模拟冷却,不利用"连续 INVOKE 刷槽"等实战不存在的情况
  *
+ * 三级词典裁决(切球数相同时的 tie-breaking,符合人体工学):
+ *   - Primary = 切球次数(必须最优,决定 orbSwitches)
+ *   - Secondary = 相邻切球键不同次数("重复按键放一起"分组偏好;EEW 胜过 EWE)
+ *   - Tertiary = 合成时刻球序与规范配方 SPELL_RECIPE 的位置不匹配数(EEW 胜过 WEE)
+ *   R/CAST 后重置 secondary 上下文(prevOrb=null),分组在每个切球 run 内独立生效。
+ *
  * 约束(已与用户对齐):
  *   - 槽位三规则(新技能进首位、首位相同不变、次位提到首位)
  *   - 释放键要求技能必须在当前槽位
@@ -49,14 +55,37 @@ interface SearchState {
   slots: [SpellName | null, SpellName | null]
   /** 最近一次 R 合成但尚未释放的技能名;非 null 时禁止切球(强制立即释放) */
   pendingInvoke: SpellName | null
+  /** 上一个 ORB 键;用于"重复按键分组"裁决。R/CAST 后置 null(重置分组上下文) */
+  prevOrb: Element | null
 }
 
-/** 序列化为哈希 key(忽略槽位顺序? 不——槽位顺序也影响释放可行性) */
+/** 序列化为哈希 key(prevOrb 入 key,使不同分组路径都能被探索,不被 visited 丢弃) */
 function stateKey(s: SearchState): string {
-  return `${s.orbs.join('')}|${s.progress}|${s.slots[0] ?? '_'}>${s.slots[1] ?? '_'}|${s.pendingInvoke ?? '_'}`
+  return `${s.orbs.join('')}|${s.progress}|${s.slots[0] ?? '_'}>${s.slots[1] ?? '_'}|${s.pendingInvoke ?? '_'}|${s.prevOrb ?? '_'}`
 }
 
 const ORB_KEYS: ReadonlyArray<'Q' | 'W' | 'E'> = ['Q', 'W', 'E']
+
+/**
+ * 复合代价(三级词典裁决),编码为单个大数以便堆排序:
+ *   encoded = primary * BIG² + secondary * BIG + tertiary
+ * 字典序 = 数值序。各级均有界(切球 ≤ 3×spells,分组切换 ≤ 切球数,
+ * 不匹配 ≤ 3×spells),BIG=1024 足够。
+ *   - Primary = 切球次数(必须最优,决定 orbSwitches)
+ *   - Secondary = 相邻切球键不同次数("重复按键放一起"分组偏好)
+ *   - Tertiary = 合成时刻球序与规范配方 SPELL_RECIPE 的位置不匹配总数
+ */
+const COST_BIG = 1024
+
+/** 合成时刻:3 球队列 vs 规范配方的逐位不匹配数(tertiary 增量) */
+function recipeMismatchDelta(orbs: Element[], spell: SpellName): number {
+  const recipe = SPELL_RECIPE[spell]
+  let mismatch = 0
+  for (let i = 0; i < orbs.length; i++) {
+    if (orbs[i] !== recipe[i]) mismatch++
+  }
+  return mismatch
+}
 
 /** FIFO 入队:满 3 时挤出队首 */
 function pushOrb(orbs: Element[], el: Element): Element[] {
@@ -148,32 +177,40 @@ export function solveCombo(
     progress: preCount,
     slots: startSlots,
     pendingInvoke: null,
+    prevOrb: null, // 预切起手不算"上一个 ORB",首个切球 run 从零开始分组
   }
 
-  // ── 0-1 BFS:切球代价 1,合成/释放代价 0 ───────────────────────
-  // 用桶式 BFS(代价只有 0/1),避免 Dijkstra 的堆开销
-  type Frontier = { state: SearchState; steps: SolverStep[]; cost: number }
+  // ── Dijkstra:三级词典裁决代价,堆按编码后的单一数值升序 ─────────
+  type Frontier = { state: SearchState; steps: SolverStep[]; cost: number /* encodeCost 后 */ }
   const visited = new Set<string>()
-  // 用双数组代替 deque:currentBucket 处理代价为当前最小的一层
-  // 简化:直接用 Dijkstra(代价只有 0/1,堆操作 O(log n),状态少完全够)
   const heap: Frontier[] = []
   const pushHeap = (f: Frontier) => {
-    // 插入排序按 cost 升序(状态数 < 1 万,简单数组够用)
+    // 插入排序按 encoded cost 升序(状态数 < 1 万,简单数组够用)
     let i = 0
     while (i < heap.length && heap[i].cost <= f.cost) i++
     heap.splice(i, 0, f)
   }
 
+  /** 解码 encoded cost 的 primary(切球数) */
+  const primaryOf = (c: number) => Math.floor(c / (COST_BIG * COST_BIG))
+
   heap.push({ state: start, steps: preCastSteps, cost: 0 })
-  visited.add(stateKey(start))
 
   while (heap.length > 0) {
     const { state, steps, cost } = heap.shift()!
     const current = state
+    const ckey = stateKey(current)
+
+    // 标准 Dijkstra:出队时去重。首次出队即最小代价(堆按 encoded cost 升序),
+    // 故此处标记 visited 后,同状态更高代价的重复条目被跳过。
+    // 注意:必须在出队而非入队去重 —— 三级裁决下,同状态可经不同前驱以不同
+    // secondary/tertiary 入队,入队去重会丢弃更优裁决。
+    if (visited.has(ckey)) continue
+    visited.add(ckey)
 
     // 目标:所有目标技能都已释放
     if (current.progress === spells.length) {
-      return { steps, orbSwitches: cost, startingOrbs: start.orbs }
+      return { steps, orbSwitches: primaryOf(cost), startingOrbs: start.orbs }
     }
 
     const nextTarget = spells[current.progress]
@@ -181,8 +218,9 @@ export function solveCombo(
     // 实战节奏约束:R 合成后必须立即 CAST 才能继续切球(每个技能立即释放)。
     // 用 pendingInvoke 标记"刚合成但未释放"的状态,在该状态下禁止 ORB 转移。
 
-    // ── 转移1:切球(Q/W/E),代价 1 ─────────────────────────────
-    // pendingInvoke 时禁止切球,强制先释放
+    // ── 转移1:切球(Q/W/E) ─────────────────────────────────────
+    // 代价:primary +1(切球);secondary +1 当 prevOrb 与本次不同(分组偏好)。
+    // pendingInvoke 时禁止切球,强制先释放。
     if (current.pendingInvoke === null) {
       for (const el of ORB_KEYS) {
         const newOrbs = pushOrb(current.orbs, el)
@@ -191,22 +229,20 @@ export function solveCombo(
           progress: current.progress,
           slots: current.slots,
           pendingInvoke: null,
+          prevOrb: el, // 记录本次切球键,供下一步分组裁决
         }
-        const k = stateKey(ns)
-        if (!visited.has(k)) {
-          visited.add(k)
-          pushHeap({
-            state: ns,
-            steps: [...steps, { kind: 'ORB', key: el }],
-            cost: cost + 1,
-          })
-        }
+        const adjDelta = current.prevOrb !== null && current.prevOrb !== el ? 1 : 0
+        pushHeap({
+          state: ns,
+          steps: [...steps, { kind: 'ORB', key: el }],
+          cost: cost + COST_BIG * COST_BIG + adjDelta * COST_BIG,
+        })
       }
     }
 
-    // ── 转移2:R 合成(代价 0),仅当球满且 pendingInvoke 为空 ───────
-    // 剪枝:只考虑合成 nextTarget(其他合成对释放进度无直接帮助)。
-    // pendingInvoke 时不能再合成,必须先释放当前 pending 的技能。
+    // ── 转移2:R 合成,仅当球满且 pendingInvoke 为空 ──────────────
+    // 代价:tertiary += recipeMismatchDelta(合成时刻球序偏离规范配方)。
+    // 剪枝:只考虑合成 nextTarget。pendingInvoke 时不能再合成。
     if (current.orbs.length === 3 && current.pendingInvoke === null) {
       const invoked = invoke(current.orbs)
       // 只在合成结果 == nextTarget 时才有意义(为释放它推进 progress)
@@ -217,21 +253,18 @@ export function solveCombo(
           progress: current.progress,
           slots: newSlots,
           pendingInvoke: invoked,
+          prevOrb: null, // R 重置分组上下文
         }
-        const k = stateKey(ns)
-        if (!visited.has(k)) {
-          visited.add(k)
-          pushHeap({
-            state: ns,
-            steps: [...steps, { kind: 'INVOKE', key: 'R', spell: invoked }],
-            cost, // 0 代价
-          })
-        }
+        pushHeap({
+          state: ns,
+          steps: [...steps, { kind: 'INVOKE', key: 'R', spell: invoked }],
+          cost: cost + recipeMismatchDelta(current.orbs, invoked),
+        })
       }
     }
 
-    // ── 转移3:释放当前目标技能(代价 0),推进 progress ──────────
-    // 释放键:DOTA2 时按 D/F(槽位索引);LEGACY 时按专属键。
+    // ── 转移3:释放当前目标技能,推进 progress ───────────────────
+    // 代价:三级均 +0。释放键:DOTA2 时按 D/F(槽位索引);LEGACY 时按专属键。
     // 释放后清空 pendingInvoke,允许继续切球。
     const slotIdx = current.slots.indexOf(nextTarget)
     if (slotIdx !== -1) {
@@ -246,16 +279,13 @@ export function solveCombo(
         progress: current.progress + 1,
         slots: current.slots,
         pendingInvoke: null,
+        prevOrb: null, // CAST 重置分组上下文
       }
-      const k = stateKey(ns)
-      if (!visited.has(k)) {
-        visited.add(k)
-        pushHeap({
-          state: ns,
-          steps: [...steps, { kind: 'CAST', key: castKey, spell: nextTarget }],
-          cost, // 0 代价
-        })
-      }
+      pushHeap({
+        state: ns,
+        steps: [...steps, { kind: 'CAST', key: castKey, spell: nextTarget }],
+        cost, // 三级均 +0
+      })
     }
   }
 

@@ -109,4 +109,9 @@ describe('Dashboard — 趋势折线图(combo筛选+时间范围)', () => {
     render(<Dashboard sessions={sessions} {...props} />)
     expect(screen.getByText(tZh('dashboard.noSuccessInRange'))).toBeInTheDocument()
   })
+
+  it('无复盘数据时显示"成功率: 未知"徽章(占位防视觉偏左)', () => {
+    render(<Dashboard sessions={[]} {...props} />)
+    expect(screen.getByText(tZh('dashboard.successRateUnknown'))).toBeInTheDocument()
+  })
 })

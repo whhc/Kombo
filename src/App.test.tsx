@@ -59,4 +59,14 @@ describe('App — 视图路由 + i18n', () => {
     // en/DOTA2="Tornado → EMP → Chaos Meteor → Deafening Blast"
     expect(screen.getByText('Tornado → EMP → Chaos Meteor → Deafening Blast')).toBeInTheDocument()
   })
+
+  it('静音按钮:默认开启(渲染图标 SVG),点击后切换 aria-label', () => {
+    render(<App />)
+    // 默认开启音效:aria-label 为"关闭音效"(按钮含义=点击会关闭),渲染 lucide 图标(SVG)
+    const muteBtn = screen.getByRole('button', { name: translate('zh', 'settings.soundOff') })
+    expect(muteBtn.querySelector('svg')).toBeInTheDocument()
+    fireEvent.click(muteBtn)
+    // 点击后:静音态,aria-label 变"开启音效"
+    expect(screen.getByRole('button', { name: translate('zh', 'settings.soundOn') })).toBeInTheDocument()
+  })
 })

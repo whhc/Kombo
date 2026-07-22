@@ -12,6 +12,8 @@ import { solveCombo } from '../domain/solver'
 import type { TargetCombo, SpellName, SessionMetrics } from '../domain/types'
 import { saveSession, localStorageSessionBackend } from '../domain/sessionStore'
 import { spellName as spellNameFn } from '../domain/i18n'
+import { playSpellSound, playInvokeSound } from '../sound/soundManager'
+import { Eye, EyeOff, Check, X } from 'lucide-react'
 import type { KeybindScheme } from '../domain/keymap'
 import type { Locale } from '../domain/i18n'
 import type { IconTheme } from '../domain/icons'
@@ -28,6 +30,8 @@ interface Props {
   showOptimalPath?: boolean
   /** 切换最优键序显示(走 settings 持久化) */
   onToggleOptimalPath?: () => void
+  /** 是否开启音效;默认 false(自由/内嵌模式不传时静音) */
+  soundEnabled?: boolean
 }
 
 /**
@@ -36,7 +40,7 @@ interface Props {
  *   combo非空 + 有onQuit → 内嵌模式(Quit退出,不保存不循环)
  *   combo非空 + 无onQuit → 独立模式(自动保存+循环,当前行为)
  */
-export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOptimalPath = false, onToggleOptimalPath }: Props) {
+export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOptimalPath = false, onToggleOptimalPath, soundEnabled = false }: Props) {
   const [invoker, setInvoker] = useState<InvokerState>({ orbs: [], slots: [null, null] })
   const [session, setSession] = useState<SessionState | null>(null)
   const [lastTs, setLastTs] = useState(0)
@@ -107,7 +111,13 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
         setLastCast({ type: action.actionType, spell: action.spellName ?? null })
         if (action.actionType === 'CAST' && action.spellName) {
           setSpellHistory((prev) => [...prev.slice(-9), action.spellName!])
+          playSpellSound(action.spellName, soundEnabled)
         }
+      }
+
+      // 成功合成技能(按 R 出有效技能,action.spellName 非空)时播放合成音
+      if (action.actionType === 'INVOKE' && action.spellName) {
+        playInvokeSound(soundEnabled)
       }
 
       if (combo && session) {
@@ -116,7 +126,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [combo, session, invoker, lastTs, scheme, onQuit, finished])
+  }, [combo, session, invoker, lastTs, scheme, onQuit, finished, soundEnabled])
 
   // ─── 自由模式(combo=null) ───
   if (!combo) {
@@ -160,7 +170,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
             aria-label={t('combo.toggleOptimalPath')}
             title={t('combo.toggleOptimalPath')}
           >
-            {showOptimalPath ? '👁' : '🚫'}
+            {showOptimalPath ? <Eye size={12} /> : <EyeOff size={12} />}
           </button>
         )}
       </p>
@@ -186,7 +196,8 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
 
       {finished ? (
         <div className="flex flex-col items-center gap-3">
-          <span className={finished.status === 'SUCCESS' ? 'text-emerald-400 font-bold text-lg' : 'text-rose-400 font-bold text-lg'}>
+          <span className={`flex items-center gap-1.5 font-bold text-lg ${finished.status === 'SUCCESS' ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {finished.status === 'SUCCESS' ? <Check size={20} /> : <X size={20} />}
             {finished.status === 'SUCCESS' ? t('practice.success') : t('practice.failed')}
           </span>
           <MetricsPanel metrics={finished.metrics} t={t} />
