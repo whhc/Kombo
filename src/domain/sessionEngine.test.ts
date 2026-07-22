@@ -109,21 +109,37 @@ describe('sessionEngine — 会话状态机与宽松继续', () => {
   })
 })
 
-describe('sessionEngine — 预切起手初始槽位', () => {
-  it('createInitialInvokerState: 预切技能置入槽位,不产生 ActionNode', () => {
+describe('sessionEngine — 预切起手初始槽位与头顶球序', () => {
+  it('双预切:槽位 [d, f],头顶 = 最后合成的 d 配方', () => {
+    // 新语义:f=Tornado(spells[0],先合成), d=EMP(spells[1],后合成)
+    // 头顶应留最后合成的 EMP 配方 WWW
     const withPre: TargetCombo = {
       comboId: 'c1',
       name: 't',
       spells: ['Tornado', 'EMP', 'ChaosMeteor'],
-      preCastSlots: { d: 'Tornado', f: 'EMP' },
+      preCastSlots: { d: 'EMP', f: 'Tornado' },
     }
     const invokerState = createInitialInvokerState(withPre)
-    expect(invokerState.slots).toEqual(['Tornado', 'EMP'])
-    expect(invokerState.orbs).toEqual([])
+    expect(invokerState.slots).toEqual(['EMP', 'Tornado'])
+    expect(invokerState.orbs).toEqual(['W', 'W', 'W'])
   })
 
-  it('createInitialInvokerState: 空 preCastSlots 双槽为空', () => {
+  it('单预切:槽位 [d, null],头顶 = 该预切技能配方', () => {
+    // 单预切 preD = Tornado(=spells[0]),头顶 = WWQ
+    const single: TargetCombo = {
+      comboId: 'c2',
+      name: 't',
+      spells: ['Tornado', 'ChaosMeteor'],
+      preCastSlots: { d: 'Tornado' },
+    }
+    const invokerState = createInitialInvokerState(single)
+    expect(invokerState.slots).toEqual(['Tornado', null])
+    expect(invokerState.orbs).toEqual(['W', 'W', 'Q'])
+  })
+
+  it('无预切:双槽空,头顶空', () => {
     const invokerState = createInitialInvokerState(combo)
     expect(invokerState.slots).toEqual([null, null])
+    expect(invokerState.orbs).toEqual([])
   })
 })

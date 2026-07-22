@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PlayZone } from './components/PlayZone'
 import { ComboManager } from './components/ComboManager'
 import { Dashboard } from './components/Dashboard'
+import { Help } from './components/Help'
 import { HeroIcon } from './components/HeroIcon'
 import { useSettings } from './hooks/useSettings'
 import { useCombos } from './hooks/useCombos'
@@ -9,7 +10,7 @@ import { useSessions } from './hooks/useSessions'
 import { useLocale } from './hooks/useLocale'
 import type { Locale } from './domain/i18n'
 
-type View = 'practice' | 'combos' | 'dashboard'
+type View = 'practice' | 'combos' | 'dashboard' | 'help'
 
 function App() {
   const { settings, setSettings, scheme } = useSettings()
@@ -62,6 +63,13 @@ function App() {
           >
             {t('nav.dashboard')}
           </button>
+          <button
+            type="button"
+            className={`px-3 py-1 rounded border ${view === 'help' ? 'bg-white/15 border-white/30' : 'border-white/15 hover:bg-white/5'}`}
+            onClick={() => setView('help')}
+          >
+            {t('nav.help')}
+          </button>
         </nav>
       </header>
 
@@ -78,10 +86,16 @@ function App() {
           iconTheme={settings.iconTheme}
           locale={locale}
           t={t}
+          showOptimalPath={settings.showOptimalPath}
+          onToggleOptimalPath={() =>
+            setSettings((prev) => ({ ...prev, showOptimalPath: !prev.showOptimalPath }))
+          }
         />
       )}
 
       {view === 'dashboard' && <Dashboard sessions={sessions} combos={combos} iconTheme={settings.iconTheme} locale={locale} t={t} />}
+
+      {view === 'help' && <Help iconTheme={settings.iconTheme} locale={locale} t={t} />}
 
       <SettingsBar settings={settings} setSettings={setSettings} locale={locale} toggleLocale={toggle} t={t} />
     </div>

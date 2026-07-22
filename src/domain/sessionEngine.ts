@@ -1,4 +1,5 @@
-import type { ActionNode, TargetCombo, ExecutionSession, SpellName } from './types'
+import type { ActionNode, TargetCombo, ExecutionSession, SpellName, Element } from './types'
+import { SPELL_RECIPE } from './spellBook'
 
 /**
  * 会话状态(doc.md §4.1 ExecutionSession 的进行态)。
@@ -74,12 +75,32 @@ export function finishSession(state: SessionState, combo: TargetCombo, endTime: 
 }
 
 /**
- * 根据预切起手构建 invokerState 初始槽位(doc.md §4.3)。
- * 预切技能直接置入,不产生 ActionNode(不计入本次统计)。
+ * 根据预切起手构建 invokerState 初始槽位与头顶球序(doc.md §4.3)。
+ *
+ * 预切语义(与 solver 一致):
+ *   - preCastSlots.f = spells[0] = 玩家先合成的预切技能(被推到 F 槽)
+ *   - preCastSlots.d = spells[1] = 玩家后合成的预切技能(占据 D 槽)
+ * 合成顺序:f → d。最终槽位 [d, f];头顶保留 = 最后合成的 d 配方。
+ *
+ * 起手球序设定:
+ *   - 双预切(f + d):头顶 = SPELL_RECIPE[d](最后合成的)
+ *   - 单预切(仅 d):头顶 = SPELL_RECIPE[d]
+ *   - 无预切:头顶 = [](从零开始)
+ *
+ * 这样玩家从预切状态出发,直接切后续技能即可,符合实战预切概念。
  */
 export function createInitialInvokerState(combo: TargetCombo): {
-  orbs: []
+  orbs: Element[]
   slots: [SpellName | null, SpellName | null]
 } {
-  return { orbs: [], slots: [combo.preCastSlots.d ?? null, combo.preCastSlots.f ?? null] }
+  const preD = combo.preCastSlots.d
+  const preF = combo.preCastSlots.f
+  // 头顶球 = 最后合成的预切技能配方(双预切时为 d,因 d 后合成)
+  const lastPreSpell = preD ?? preF
+  const orbs: Element[] = lastPreSpell ? [...SPELL_RECIPE[lastPreSpell]] : []
+  return {
+    orbs,
+    // slots[0] = D 槽 = preD; slots[1] = F 槽 = preF
+    slots: [preD ?? null, preF ?? null],
+  }
 }

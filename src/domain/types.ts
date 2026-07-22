@@ -47,11 +47,16 @@ export interface TargetCombo {
 /** 三维评估结果(Issue 06 实现,此处占位) */
 export interface SessionMetrics {
   // 维度①:SUCCESS/FAILED(已在 session.status 里)
-  // 维度②:切球达成率
+  // 维度②a:切球达成率(只看 Q/W/E)
   optimalOrbSwitches: number | null
   actualOrbSwitches: number
   orbRatio: number | null // 0..1,null=FAILED 轮次 N/A
   excessOrbSwitches: number
+  // 维度②b:总按键达成率(看所有有效按键 Q/W/E/R/D/F 等)
+  optimalKeyCount: number | null
+  actualKeyCount: number
+  keyRatio: number | null // 0..1,null=FAILED 轮次 N/A
+  excessKeyCount: number
   // 维度③:时长
   durationMs: number
 }

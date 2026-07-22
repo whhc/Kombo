@@ -71,6 +71,9 @@ const ELEMENT_ICON_FILE_DOTA1: Record<Element, string> = {
 
 const HERO_ICON_FILE = { DOTA1: 'Kael.webp', DOTA2: 'Invoker_icon.webp' } as const
 
+/** R 键(祈唤)专属图标,与合成结果技能无关 */
+const INVOKE_ICON_FILE = { DOTA1: 'Invoke-r9ei.webp', DOTA2: 'Invoke_icon.webp' } as const
+
 export function spellIconUrl(spell: SpellName, theme: IconTheme = 'DOTA2'): string {
   const file = theme === 'DOTA1' ? SPELL_ICON_FILE_DOTA1[spell] : SPELL_ICON_FILE_DOTA2[spell]
   return iconUrl(theme, theme === 'DOTA1' ? 'dota1' : 'dota2', file)
@@ -79,6 +82,11 @@ export function spellIconUrl(spell: SpellName, theme: IconTheme = 'DOTA2'): stri
 export function elementIconUrl(el: Element, theme: IconTheme = 'DOTA2'): string {
   const file = theme === 'DOTA1' ? ELEMENT_ICON_FILE_DOTA1[el] : ELEMENT_ICON_FILE_DOTA2[el]
   return iconUrl(theme, theme === 'DOTA1' ? 'dota1' : 'dota2', file)
+}
+
+/** R 键(祈唤)图标 URL */
+export function invokeIconUrl(theme: IconTheme = 'DOTA2'): string {
+  return iconUrl(theme, theme === 'DOTA1' ? 'dota1' : 'dota2', INVOKE_ICON_FILE[theme])
 }
 
 /** 卡尔英雄头像 */

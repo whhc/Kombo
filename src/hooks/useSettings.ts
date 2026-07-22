@@ -11,6 +11,7 @@ function load(): UserSettings {
       return {
         iconTheme: parsed.iconTheme === 'DOTA1' ? 'DOTA1' : 'DOTA2',
         keybindScheme: parsed.keybindScheme === 'LEGACY' ? 'LEGACY' : 'DOTA2',
+        showOptimalPath: parsed.showOptimalPath !== false, // 默认 true,仅显式 false 才关
       }
     }
   } catch {

@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { TargetCombo } from '../domain/types'
 import { SpellIcon } from './SpellIcon'
 import { ComboEditor } from './ComboEditor'
 import { PlayZone } from './PlayZone'
+import { OptimalPathDisplay } from './OptimalPathDisplay'
 import { resolveComboName } from '../domain/resolveComboName'
 import { spellName as spellNameFn } from '../domain/i18n'
+import { solveCombo } from '../domain/solver'
 import type { Locale } from '../domain/i18n'
 import type { IconTheme } from '../domain/icons'
 import type { KeybindScheme } from '../domain/keymap'
@@ -17,10 +19,14 @@ interface Props {
   iconTheme: IconTheme
   locale: Locale
   t: (key: string) => string
+  /** 是否显示最优键序 */
+  showOptimalPath: boolean
+  /** 切换显示 */
+  onToggleOptimalPath: () => void
 }
 
 /** 连招列表 + 新建/编辑 + 内嵌练习(practicing) */
-export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, locale, t }: Props) {
+export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, locale, t, showOptimalPath, onToggleOptimalPath }: Props) {
   const [editing, setEditing] = useState<TargetCombo | null>(null)
   const [creating, setCreating] = useState(false)
   const [practicing, setPracticing] = useState<TargetCombo | null>(null)
@@ -33,6 +39,7 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
         iconTheme={iconTheme}
         locale={locale}
         t={t}
+        scheme={scheme}
         onSave={(combo) => {
           onSave(combo)
           setCreating(false)
@@ -56,6 +63,8 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
         locale={locale}
         t={t}
         onQuit={() => setPracticing(null)}
+        showOptimalPath={showOptimalPath}
+        onToggleOptimalPath={onToggleOptimalPath}
       />
     )
   }
@@ -77,37 +86,68 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
         {combos.map((c) => (
           <li
             key={c.comboId}
-            className="flex items-center justify-between p-3 rounded bg-neutral-800 border border-white/10"
+            className="flex flex-col gap-2 p-3 rounded bg-neutral-800 border border-white/10"
           >
-            <div className="flex flex-col gap-1">
-              <span className="font-medium">{resolveComboName(c, t, locale, iconTheme)}</span>
-              <span className="flex items-center gap-1 text-xs text-neutral-400">
-                {c.spells.map((s, i) => (
-                  <SpellIcon key={i} spell={s} tooltipName={spellNameFn(locale, iconTheme, s)} size={20} theme={iconTheme} className="opacity-80" />
-                ))}
-                {(c.preCastSlots.d || c.preCastSlots.f) && (
-                  <span className="ml-2 text-amber-400">
-                    {t('combo.preCastLabel')}:
-                    {[c.preCastSlots.d && spellNameFn(locale, iconTheme, c.preCastSlots.d), c.preCastSlots.f && spellNameFn(locale, iconTheme, c.preCastSlots.f)].filter(Boolean).join(' / ')}
-                  </span>
-                )}
-              </span>
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex flex-col gap-1 min-w-0 flex-1">
+                <span className="font-medium break-words">{resolveComboName(c, t, locale, iconTheme)}</span>
+                <span className="flex items-center gap-1 text-xs text-neutral-400 flex-wrap">
+                  {c.spells.map((s, i) => (
+                    <SpellIcon key={i} spell={s} tooltipName={spellNameFn(locale, iconTheme, s)} size={20} theme={iconTheme} className="opacity-80" />
+                  ))}
+                  {(c.preCastSlots.d || c.preCastSlots.f) && (
+                    <span className="ml-2 text-amber-400">
+                      {t('combo.preCastLabel')}:
+                      {/* 显示顺序 = 释放顺序:f(先释放) / d(后释放) */}
+                      {[c.preCastSlots.f && spellNameFn(locale, iconTheme, c.preCastSlots.f), c.preCastSlots.d && spellNameFn(locale, iconTheme, c.preCastSlots.d)].filter(Boolean).join(' / ')}
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button type="button" className="px-2 py-1 text-xs rounded bg-sky-600 hover:bg-sky-500" onClick={() => setPracticing(c)}>
+                  {t('combo.practice')}
+                </button>
+                <button type="button" className="px-2 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setEditing(c)}>
+                  {t('combo.edit')}
+                </button>
+                <button type="button" className="px-2 py-1 text-xs rounded bg-rose-700 hover:bg-rose-600" onClick={() => onDelete(c.comboId)}>
+                  ×
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button type="button" className="px-2 py-1 text-xs rounded bg-sky-600 hover:bg-sky-500" onClick={() => setPracticing(c)}>
-                {t('combo.practice')}
-              </button>
-              <button type="button" className="px-2 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setEditing(c)}>
-                {t('combo.edit')}
-              </button>
-              <button type="button" className="px-2 py-1 text-xs rounded bg-rose-700 hover:bg-rose-600" onClick={() => onDelete(c.comboId)}>
-                ×
-              </button>
-            </div>
+            {showOptimalPath && (
+              <ComboOptimalPath combo={c} scheme={scheme} iconTheme={iconTheme} locale={locale} />
+            )}
           </li>
         ))}
         {combos.length === 0 && <li className="text-neutral-500 text-sm">{t('combo.empty')}</li>}
       </ul>
+    </div>
+  )
+}
+
+/** 列表卡片里的最优键序行:memo 化避免每次父组件渲染都重算 BFS */
+function ComboOptimalPath({
+  combo,
+  scheme,
+  iconTheme,
+  locale,
+}: {
+  combo: TargetCombo
+  scheme: KeybindScheme
+  iconTheme: IconTheme
+  locale: Locale
+}) {
+  const solution = useMemo(
+    () => (combo.spells.length > 0 ? solveCombo(combo, scheme) : null),
+    [combo, scheme],
+  )
+  if (!solution || solution.steps.length === 0) return null
+  return (
+    <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+      <span className="text-[10px] text-neutral-500 shrink-0">{locale === 'zh' ? `${solution.orbSwitches} 切` : `${solution.orbSwitches} sw`}</span>
+      <OptimalPathDisplay steps={solution.steps} iconTheme={iconTheme} locale={locale} startingOrbs={solution.startingOrbs} />
     </div>
   )
 }

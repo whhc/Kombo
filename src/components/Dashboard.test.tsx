@@ -22,6 +22,10 @@ function mkSession(
       actualOrbSwitches: 4,
       orbRatio,
       excessOrbSwitches: 1,
+      optimalKeyCount: 6,
+      actualKeyCount: 8,
+      keyRatio: orbRatio !== null ? 0.75 : null,
+      excessKeyCount: 2,
       durationMs: 500,
     },
   }
@@ -48,7 +52,7 @@ describe('Dashboard — 趋势折线图(combo筛选+时间范围)', () => {
     const now = Date.now()
     const sessions = [mkSession('s1', 'c1', now - 1000)]
     render(<Dashboard sessions={sessions} {...props} />)
-    expect(screen.getByLabelText('选择连招')).toBeInTheDocument()
+    expect(screen.getByLabelText(tZh('dashboard.allCombos'))).toBeInTheDocument()
     // 有数据图表应渲染(ECharts SVG)
     expect(screen.getByLabelText('成长趋势图')).toBeInTheDocument()
   })
@@ -61,7 +65,7 @@ describe('Dashboard — 趋势折线图(combo筛选+时间范围)', () => {
     ]
     render(<Dashboard sessions={sessions} {...props} />)
     // 选 c1  combo
-    fireEvent.change(screen.getByLabelText('选择连招'), { target: { value: 'c1' } })
+    fireEvent.change(screen.getByLabelText(tZh('dashboard.allCombos')), { target: { value: 'c1' } })
     // 应只显示 c1 的数据(趋势图仍存在,但数据点少)
     expect(screen.getByLabelText('成长趋势图')).toBeInTheDocument()
   })
@@ -85,5 +89,24 @@ describe('Dashboard — 趋势折线图(combo筛选+时间范围)', () => {
     render(<Dashboard sessions={sessions} {...props} />)
     fireEvent.click(screen.getByRole('button', { name: tZh('dashboard.range.today') }))
     expect(screen.getByText(tZh('dashboard.noRecordInRange'))).toBeInTheDocument()
+  })
+
+  it('成功率徽章:显示 成功数/总数 与百分比', () => {
+    const now = Date.now()
+    const sessions = [
+      mkSession('s1', 'c1', now - 3000, 0.8), // SUCCESS
+      mkSession('s2', 'c1', now - 2000, null), // FAILED
+      mkSession('s3', 'c1', now - 1000, 0.6), // SUCCESS
+    ]
+    render(<Dashboard sessions={sessions} {...props} />)
+    // 2/3 ≈ 67%
+    expect(screen.getByText(/67%.*2\/3/)).toBeInTheDocument()
+  })
+
+  it('范围内仅失败轮次时显示"无成功轮次"', () => {
+    const now = Date.now()
+    const sessions = [mkSession('f1', 'c1', now - 1000, null)] // FAILED
+    render(<Dashboard sessions={sessions} {...props} />)
+    expect(screen.getByText(tZh('dashboard.noSuccessInRange'))).toBeInTheDocument()
   })
 })

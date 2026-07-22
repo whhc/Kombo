@@ -31,10 +31,12 @@ describe('evaluator — 维度② 最优切球数(贪心)', () => {
       comboId: 'c',
       name: 't',
       spells: ['Tornado', 'EMP', 'ChaosMeteor'],
-      preCastSlots: { d: 'Tornado', f: 'EMP' },
+      // 新语义:preCastSlots.f = spells[0] = Tornado(先合成被推到 F)
+      //        preCastSlots.d = spells[1] = EMP(后合成占据 D,头顶留 EMP 配方)
+      preCastSlots: { d: 'EMP', f: 'Tornado' },
     }
     // 预切 Tornado(WWQ)、EMP(WWW)已切好,头顶是 WWW(EMP 的)
-    // 后续 ChaosMeteor(EEW):WWW→EEW,公共 W,换 2 次(W→E, W→E)
+    // 后续 ChaosMeteor(EEW):WWW→EEW,实际 [W,E,E] 即可合,换 2 次
     expect(optimalOrbSwitches(combo)).toBe(2)
   })
 
@@ -67,7 +69,7 @@ describe('evaluator — evaluateSession 三维合一', () => {
       comboId: 'c',
       name: 't',
       spells: ['Tornado', 'EMP', 'ChaosMeteor'],
-      preCastSlots: { d: 'Tornado', f: 'EMP' },
+      preCastSlots: { d: 'EMP', f: 'Tornado' },
     }
     // 玩家:释放 Tornado、EMP(预切在槽),切 EEW 出 Meteor,释放。实际切球 E,E,W = 3 次(最优 2 次)
     const actions: ActionNode[] = [
@@ -88,12 +90,17 @@ describe('evaluator — evaluateSession 三维合一', () => {
       endTime: 400,
       metrics: null,
     }
-    const m = evaluateSession(session, combo)
-    // 维度②:最优 2(WWW→EEW 换2),实际 3(E,E,W),ratio = 2/3
+    const m = evaluateSession(session, combo, 'DOTA2')
+    // 维度②a:最优切球 2([W,E,E] 即可合 Meteor,玩家切了 E,E,W 浪费 1 个 W)
     expect(m.optimalOrbSwitches).toBe(2)
     expect(m.actualOrbSwitches).toBe(3)
     expect(m.orbRatio).toBeCloseTo(2 / 3, 5)
     expect(m.excessOrbSwitches).toBe(1)
+    // 维度②b:总按键 最优 6(F,D,E,E,R,D) vs 实际 7(玩家多切 1 个 W),ratio = 6/7
+    expect(m.optimalKeyCount).toBe(6)
+    expect(m.actualKeyCount).toBe(7)
+    expect(m.keyRatio).toBeCloseTo(6 / 7, 5)
+    expect(m.excessKeyCount).toBe(1)
     // 维度③:首有效键 100 → 末目标 400 = 300ms
     expect(m.durationMs).toBe(300)
   })
@@ -116,6 +123,7 @@ describe('evaluator — evaluateSession 三维合一', () => {
     }
     const m = evaluateSession(session, combo)
     expect(m.orbRatio).toBeNull()
+    expect(m.keyRatio).toBeNull() // FAILED 时总按键达成率也 N/A
     expect(m.optimalOrbSwitches).not.toBeNull() // 最优值仍可算(供参考)
   })
 
