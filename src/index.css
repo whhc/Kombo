@@ -10,3 +10,26 @@ body,
   height: 100%;
   margin: 0;
 }
+
+/* 滚动由 <main> 内部处理,顶栏才能 sticky;根容器不溢出 */
+#root {
+  overflow: hidden;
+}
+
+/* 键盘焦点可见性(修复默认 outline 在深色背景上几乎不可见) */
+:focus-visible {
+  outline: 2px solid rgb(56 189 248);
+  outline-offset: 2px;
+}
+
+/* 尊重用户的减少动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -42,11 +42,15 @@ describe('App — 视图路由 + i18n', () => {
   it('DOTA1 图标时键位锁定 LEGACY', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: `${translate('zh', 'settings.iconThemeToggle')}: DOTA2` }))
+    // 锁定提示文案在齿轮弹层内,先点开
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.title') }))
     expect(screen.getByText(new RegExp(translate('zh', 'settings.keybind.lockedLegacy')))).toBeInTheDocument()
   })
 
   it('语言切换后导航与自由练习文案变英文', () => {
     render(<App />)
+    // 语言切换按钮在齿轮弹层内,先点开
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.title') }))
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.language') }))
     expect(screen.getByRole('button', { name: translate('en', 'nav.practice') })).toBeInTheDocument()
     expect(screen.getByText(translate('en', 'practice.freePlay'))).toBeInTheDocument()
@@ -54,6 +58,8 @@ describe('App — 视图路由 + i18n', () => {
 
   it('语言切换后连招库预设名也跟随变英文', () => {
     render(<App />)
+    // 语言切换按钮在齿轮弹层内,先点开
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.title') }))
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.language') }))
     fireEvent.click(screen.getByRole('button', { name: translate('en', 'nav.combos') }))
     // en/DOTA2="Tornado → EMP → Chaos Meteor → Deafening Blast"

@@ -16,11 +16,13 @@ type Dict = Record<string, string>
 // ──────────────────────────────────────────────────────────────
 const UI_ZH: Dict = {
   'app.title': 'Kombo — 卡尔连招模拟器',
+  'nav.aria': '主导航',
   'nav.practice': '练习',
   'nav.combos': '连招库',
   'nav.dashboard': '复盘',
   'nav.help': '帮助',
 
+  'settings.title': '设置',
   'settings.iconTheme': '图标',
   'settings.iconThemeToggle': '切换图标主题(当前)',
   'settings.keybind': '键位',
@@ -28,6 +30,7 @@ const UI_ZH: Dict = {
   'settings.language': '语言',
   'settings.iconTheme.DOTA1': 'DOTA1',
   'settings.iconTheme.DOTA2': 'DOTA2',
+  'settings.sound': '音效',
   'settings.soundOn': '开启音效',
   'settings.soundOff': '关闭音效',
 
@@ -85,6 +88,8 @@ const UI_ZH: Dict = {
   'dashboard.successRate': '成功率',
   'dashboard.successRateHint': '范围内成功轮次 / 总轮次(趋势图只画成功轮次)',
   'dashboard.successRateUnknown': '成功率: 未知',
+  'dashboard.totalRounds': '总轮次',
+  'dashboard.bestSpeed': '最佳速度',
 
   'metrics.orbRatio': '切球达成率',
   'metrics.keyRatio': '总按键达成率',
@@ -131,11 +136,13 @@ const UI_ZH: Dict = {
 
 const UI_EN: Dict = {
   'app.title': 'Kombo — Invoker Combo Simulator',
+  'nav.aria': 'Main navigation',
   'nav.practice': 'Practice',
   'nav.combos': 'Combos',
   'nav.dashboard': 'Review',
   'nav.help': 'Help',
 
+  'settings.title': 'Settings',
   'settings.iconTheme': 'Icon',
   'settings.iconThemeToggle': 'Toggle icon theme (current)',
   'settings.keybind': 'Keys',
@@ -143,6 +150,7 @@ const UI_EN: Dict = {
   'settings.language': 'Lang',
   'settings.iconTheme.DOTA1': 'DOTA1',
   'settings.iconTheme.DOTA2': 'DOTA2',
+  'settings.sound': 'Sound',
   'settings.soundOn': 'Sound on',
   'settings.soundOff': 'Sound off',
 
@@ -200,6 +208,8 @@ const UI_EN: Dict = {
   'dashboard.successRate': 'Success',
   'dashboard.successRateHint': 'Successful rounds / total rounds in range (chart shows successes only)',
   'dashboard.successRateUnknown': 'Success: Unknown',
+  'dashboard.totalRounds': 'Total rounds',
+  'dashboard.bestSpeed': 'Best speed',
 
   'metrics.orbRatio': 'Orb ratio',
   'metrics.keyRatio': 'Keystroke ratio',
