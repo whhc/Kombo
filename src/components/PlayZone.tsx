@@ -245,13 +245,6 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
         <SpellHistory spells={spellHistory} theme={iconTheme} locale={locale} />
         {/* 技能配方参考面板(可切换):配方顺序与帮助页一致,元素用图标 */}
         {showRecipe && <RecipePanel theme={iconTheme} locale={locale} t={t} />}
-        <button
-          type="button"
-          className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10"
-          onClick={() => setSpellHistory([])}
-        >
-          {t('practice.reset')}
-        </button>
       </div>
     )
   }

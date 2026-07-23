@@ -36,13 +36,13 @@ const comboWithPre: TargetCombo = {
 const props = { locale: ZH_LOCALE, t: tZh, iconTheme: DOTA2_THEME }
 
 describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
-  it('combo=null 时为自由模式(显示 SpellHistory,无进度条)', () => {
+  it('combo=null 时为自由模式(显示 SpellHistory,无进度条,无操作按钮)', () => {
     render(<PlayZone combo={null} scheme={'LEGACY'} {...props} />)
     // 自由模式:无目标连招引导,直接可按键
     expect(screen.getByText(tZh('practice.freePlay'))).toBeInTheDocument()
-    // 有重置按钮而非"结束并保存"
-    expect(screen.getByRole('button', { name: tZh('practice.reset') })).toBeInTheDocument()
+    // 无"结束并保存"按钮(自由模式不存盘);重置按钮已移除(释放历史 FIFO 自动滚动)
     expect(screen.queryByRole('button', { name: tZh('practice.endAndSave') })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: tZh('practice.reset') })).not.toBeInTheDocument()
   })
 
   it('内嵌模式(onQuit 存在):显示 Quit 按钮,释放全部后自动保存显示结果', () => {
