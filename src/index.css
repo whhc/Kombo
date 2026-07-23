@@ -55,15 +55,15 @@ select:not(:disabled) {
   0% {
     box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
   }
-  35% {
-    box-shadow: 0 0 14px 5px rgba(56, 189, 248, 0.85);
+  30% {
+    box-shadow: 0 0 16px 6px rgba(56, 189, 248, 0.9);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
   }
 }
 
-/* 应用脉冲动画的 class(挂在新球的容器上)。延迟 0.15s 让左移动画先完成。 */
+/* 应用脉冲动画的 class(挂在新球的容器上)。无延迟,快速脉冲呼应切球手感。 */
 .orb-pulse {
-  animation: orb-pulse 0.7s ease-out 0.15s 1;
+  animation: orb-pulse 0.4s ease-out 1;
 }

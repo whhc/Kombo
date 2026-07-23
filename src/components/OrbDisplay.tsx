@@ -40,8 +40,8 @@ export function OrbDisplay({ orbs, theme, locale, t }: Props) {
   useEffect(() => {
     if (currentTailId > 0 && currentTailId !== pulseId) {
       setPulseId(currentTailId)
-      // orb-pulse keyframes 时长 0.7s,播完清除(允许下一次再触发)
-      const id = setTimeout(() => setPulseId(0), 750)
+      // orb-pulse keyframes 时长 0.4s,播完清除(允许下一次再触发)
+      const id = setTimeout(() => setPulseId(0), 450)
       return () => clearTimeout(id)
     }
   }, [currentTailId, pulseId])
