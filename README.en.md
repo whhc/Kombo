@@ -22,6 +22,7 @@ Download the latest `Kombo_x.x.x_x64-setup.exe` from [Releases](../../releases) 
 - **Spell Cooldown**: A successful cast triggers a 2-second cooldown (clockwise sweep overlay); repeated casts during cooldown are blocked.
 - **Sound Feedback**: Casting a spell / a successful invoke plays the matching sound effect (independently toggleable in settings; persisted).
 - **Kill Announcer**: A successful combo counts as a kill, playing Dota2 announcer sounds (First Blood / Double Kill / ... / Rampage + Killing Spree / ... / Godlike); a failed combo counts as your death and resets the kill streak.
+- **Spell Recipes Reference**: A toggleable recipe panel in free practice (10 spells + 3-element recipes, elements as icons, ordered Q→W→E).
 
 ### Combo Library
 - **Custom Combos**: Add spells in sequence (each spell appears only once per combo); optionally pre-cast the first two spells as a starting state.
