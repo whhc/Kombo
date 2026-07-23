@@ -33,5 +33,9 @@ if (needsPolyfill) {
 
 beforeEach(() => {
   mem.clear()
+  // 全局设 navigator 为中文:多数测试以中文文案断言,与 useLocale 的系统语言探测对齐。
+  // useLocale.test.ts 会按需覆盖为其他语言。
+  Object.defineProperty(navigator, 'languages', { value: ['zh-CN', 'zh', 'en'], configurable: true })
+  Object.defineProperty(navigator, 'language', { value: 'zh-CN', configurable: true })
 })
 
