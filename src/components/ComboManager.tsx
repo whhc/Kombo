@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { Trash2 } from 'lucide-react'
 import type { TargetCombo } from '../domain/types'
 import { SpellIcon } from './SpellIcon'
 import { ComboEditor } from './ComboEditor'
@@ -117,8 +118,8 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
               <button type="button" className="px-2 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setEditing(c)}>
                 {t('combo.edit')}
               </button>
-              <button type="button" className="px-2 py-1 text-xs rounded bg-rose-700 hover:bg-rose-600" onClick={() => onDelete(c.comboId)}>
-                ×
+              <button type="button" className="flex items-center justify-center px-2 py-1 text-xs rounded bg-rose-700 hover:bg-rose-600" onClick={() => onDelete(c.comboId)} aria-label={t('combo.delete')}>
+                <Trash2 size={14} />
               </button>
             </div>
           </li>
