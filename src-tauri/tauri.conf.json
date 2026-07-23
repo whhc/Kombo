@@ -15,6 +15,8 @@
         "title": "Kombo - 卡尔连招模拟器",
         "width": 1000,
         "height": 750,
+        "minWidth": 720,
+        "minHeight": 560,
         "resizable": true,
         "fullscreen": false
       }

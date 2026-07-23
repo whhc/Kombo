@@ -16,7 +16,7 @@ interface Props {
 /** 目标连招进度条:温和提示当前步,标红跑偏步骤,已完成置灰 */
 export function ProgressBar({ combo, progress, failedSteps, theme, locale, t }: Props) {
   return (
-    <div className="flex gap-2 flex-wrap justify-center" aria-label={t('app.title')}>
+    <div className="flex gap-2 flex-wrap justify-center" role="group" aria-label={t('progress.group')}>
       {combo.spells.map((spell, i) => {
         const done = i < progress
         const current = i === progress
