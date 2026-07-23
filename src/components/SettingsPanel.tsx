@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Volume2, VolumeX, Keyboard, Languages } from 'lucide-react'
+import { Volume2, VolumeX, Keyboard, Languages, Palette, Lock } from 'lucide-react'
 import type { UserSettings } from '../domain/settings'
 import type { Locale } from '../domain/i18n'
 
@@ -46,21 +46,42 @@ export function SettingsPanel({ open, onClose, settings, setSettings, locale, to
       role="dialog"
       aria-label={t('settings.title')}
     >
+      {/* 图标主题(DOTA1/DOTA2):切换会联动键位(DOTA1 强制 LEGACY) */}
+      <Row icon={<Palette size={14} />} label={t('settings.iconTheme')}>
+        <button
+          type="button"
+          className="px-2 py-0.5 text-xs rounded border border-white/20 hover:bg-white/10"
+          onClick={() => {
+            const nextTheme = settings.iconTheme === 'DOTA1' ? 'DOTA2' : 'DOTA1'
+            setSettings((prev) => ({
+              ...prev,
+              iconTheme: nextTheme,
+              keybindScheme: nextTheme === 'DOTA1' ? 'LEGACY' : prev.keybindScheme,
+            }))
+          }}
+          aria-label={t('settings.iconTheme')}
+        >
+          {settings.iconTheme}
+        </button>
+      </Row>
+
       {/* 键位 */}
       <Row icon={<Keyboard size={14} />} label={t('settings.keybind')}>
         <button
           type="button"
-          className="px-2 py-0.5 text-xs rounded border border-white/20 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1 px-2 py-0.5 text-xs rounded border border-white/20 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap shrink-0"
           disabled={settings.iconTheme === 'DOTA1'}
+          aria-label={t('settings.keybind')}
           onClick={() =>
             setSettings((prev) => ({
               ...prev,
               keybindScheme: prev.keybindScheme === 'LEGACY' ? 'DOTA2' : 'LEGACY',
             }))
           }
+          title={settings.iconTheme === 'DOTA1' ? t('settings.keybind.lockedLegacy') : undefined}
         >
           {settings.keybindScheme}
-          {settings.iconTheme === 'DOTA1' && ` ${t('settings.keybind.lockedLegacy')}`}
+          {settings.iconTheme === 'DOTA1' && <Lock size={10} />}
         </button>
       </Row>
 

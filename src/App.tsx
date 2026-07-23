@@ -35,14 +35,6 @@ function App() {
             theme={settings.iconTheme}
             locale={locale}
             size={32}
-            onClick={() => {
-              const nextTheme = settings.iconTheme === 'DOTA1' ? 'DOTA2' : 'DOTA1'
-              setSettings({
-                ...settings,
-                iconTheme: nextTheme,
-                keybindScheme: nextTheme === 'DOTA1' ? 'LEGACY' : settings.keybindScheme,
-              })
-            }}
           />
           <h1 className="text-base font-bold hidden sm:block">Kombo</h1>
           <nav className="flex gap-1 text-sm" aria-label={t('nav.aria')}>

@@ -41,10 +41,14 @@ describe('App — 视图路由 + i18n', () => {
 
   it('DOTA1 图标时键位锁定 LEGACY', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: `${translate('zh', 'settings.iconThemeToggle')}: DOTA2` }))
-    // 锁定提示文案在齿轮弹层内,先点开
+    // 打开齿轮设置面板
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.title') }))
-    expect(screen.getByText(new RegExp(translate('zh', 'settings.keybind.lockedLegacy')))).toBeInTheDocument()
+    // 点击图标主题切换到 DOTA1
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.iconTheme') }))
+    // DOTA1 下键位按钮 disabled + title 含锁定提示
+    const keybindBtn = screen.getByRole('button', { name: translate('zh', 'settings.keybind') })
+    expect(keybindBtn).toBeDisabled()
+    expect(keybindBtn.getAttribute('title')).toMatch(new RegExp(translate('zh', 'settings.keybind.lockedLegacy')))
   })
 
   it('语言切换后导航与自由练习文案变英文', () => {

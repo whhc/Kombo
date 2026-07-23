@@ -7,23 +7,18 @@ interface Props {
   locale: Locale
   size?: number
   className?: string
-  /** 点击切换图标主题(DOTA1↔DOTA2) */
-  onClick?: () => void
 }
 
-/** 卡尔英雄头像。可点击切换 dota1/dota2 图标主题。dota1 方框,dota2 圆形。
+/** 卡尔英雄头像(顶栏 logo)。dota1 方框,dota2 圆形。
+ *  纯展示;图标主题切换已移至齿轮设置面板。
  *  用 CSS 显式 width/height + object-cover 保证不同比例资源裁剪对齐。 */
-export function HeroIcon({ theme = 'DOTA2', locale, size = 48, className, onClick }: Props) {
+export function HeroIcon({ theme = 'DOTA2', locale, size = 48, className }: Props) {
   const shape = theme === 'DOTA1' ? 'rounded-md border-2 border-amber-500/50' : 'rounded-full border-2 border-amber-500/50'
-  const clickable = onClick !== undefined
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!clickable}
+    <span
       aria-label={`${t(locale, 'settings.iconThemeToggle')}: ${theme}`}
       title={`${t(locale, 'settings.iconThemeToggle')}: ${theme}`}
-      className={`inline-flex items-center justify-center overflow-hidden ${clickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${shape} ${className ?? ''}`}
+      className={`inline-flex items-center justify-center overflow-hidden ${shape} ${className ?? ''}`}
       style={{ width: size, height: size }}
     >
       <img
@@ -32,6 +27,6 @@ export function HeroIcon({ theme = 'DOTA2', locale, size = 48, className, onClic
         className="object-cover"
         style={{ width: size, height: size }}
       />
-    </button>
+    </span>
   )
 }
