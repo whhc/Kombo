@@ -34,43 +34,37 @@ export function OrbDisplay({ orbs, theme, locale, t }: Props) {
   const orbList = useOrbIdentity(orbs)
 
   const currentTailId = orbList.length > 0 ? orbList[orbList.length - 1].id : 0
-  // seenTailId 记录"已确认见过的末尾 id",用 state + effect 保证动画期间稳定
-  const [seenTailId, setSeenTailId] = useState(0)
-  const isNewTail = currentTailId > seenTailId
+  // pulseId:正在播放脉冲的球 id。检测到新末尾 id 时设置,动画时长后自动清除。
+  // 用 state(非渲染期 ref)保证 framer-motion layout re-render 期间 class 稳定。
+  const [pulseId, setPulseId] = useState(0)
   useEffect(() => {
-    if (currentTailId !== seenTailId) setSeenTailId(currentTailId)
-  }, [currentTailId, seenTailId])
+    if (currentTailId > 0 && currentTailId !== pulseId) {
+      setPulseId(currentTailId)
+      // orb-pulse keyframes 时长 0.7s,播完清除(允许下一次再触发)
+      const id = setTimeout(() => setPulseId(0), 750)
+      return () => clearTimeout(id)
+    }
+  }, [currentTailId, pulseId])
 
   return (
-    <div className="flex gap-3" role="group" aria-label={t('orb.group')}>
+    <div className="flex gap-3 overflow-visible relative" role="group" aria-label={t('orb.group')}>
       <AnimatePresence mode="popLayout" initial={false}>
-        {orbList.map((orb, i) => {
-          const isNew = isNewTail && i === orbList.length - 1
+        {orbList.map((orb) => {
+          const isPulsing = orb.id === pulseId
           return (
             <motion.div
               key={orb.id}
               layout
-              // 入场只管位移+透明度,scale 交给独立脉冲避免与 layout 冲突
+              // 入场只管位移+透明度
               initial={{ x: 60, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -60, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-              className="relative"
+              // 新球:叠加 orb-pulse CSS 外发光(不用 scale 放大,避免溢出被裁;
+              // z-10 提升避免被相邻球遮挡)
+              className={`relative rounded-full ${isPulsing ? 'orb-pulse z-10' : ''}`}
             >
               <ElementIcon element={orb.element} tooltipName={elementName(locale, orb.element)} theme={theme} />
-              {/* 新球发光环:延迟 0.15s(等左移完成)后闪一次,scale+发光 0.5s。
-                  key 含 orb.id 确保不同新球各播一次;动画播完 onAnimationComplete 移除 */}
-              {isNew && (
-                <motion.span
-                  key={`glow-${orb.id}`}
-                  aria-hidden="true"
-                  className="absolute inset-0 rounded-full pointer-events-none"
-                  style={{ boxShadow: '0 0 12px 4px rgba(56,189,248,0.7)' }}
-                  initial={{ opacity: 0, scale: 1 }}
-                  animate={{ opacity: [0, 1, 0], scale: [1, 1.4, 1.15] }}
-                  transition={{ duration: 0.65, delay: 0.15, ease: 'easeOut' }}
-                />
-              )}
             </motion.div>
           )
         })}

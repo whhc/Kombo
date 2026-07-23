@@ -46,3 +46,19 @@ select:not(:disabled) {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * 新球脉冲:box-shadow 外发光闪烁(元素本身不放大,避免溢出被祖先裁剪)。
+ * 用 CSS keyframes 驱动,不依赖 transform,不受 overflow 裁剪影响。
+ */
+@keyframes orb-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+  35% {
+    box-shadow: 0 0 14px 5px rgba(56, 189, 248, 0.85);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+}
