@@ -92,6 +92,8 @@ export function preloadSounds(): void {
 /** 内部播放:clone 出独立实例以支持快速重叠(连招释放极快) */
 function playPath(path: string, enabled: boolean): void {
   if (!enabled) return
+  // 控制台打印音效名(无播放设备时便于测试验证)
+  console.log(`[sound] ${path.split('/').pop()}`)
   try {
     const tmpl = ensureLoaded(path)
     if (!tmpl) return
