@@ -220,18 +220,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
   if (!combo) {
     return (
       <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
-        <p className="text-amber-300 text-sm flex items-center gap-2">
-          <span>{t('practice.freePlay')}</span>
-          <button
-            type="button"
-            className="px-1.5 py-0.5 text-xs rounded border border-white/20 hover:bg-white/10"
-            onClick={() => setShowRecipe((v) => !v)}
-            aria-label={t('practice.recipeToggle')}
-            title={t('practice.recipeToggle')}
-          >
-            {showRecipe ? <Eye size={12} /> : <EyeOff size={12} />}
-          </button>
-        </p>
+        <p className="text-amber-300 text-sm">{t('practice.freePlay')}</p>
         <OrbDisplay orbs={invoker.orbs} theme={iconTheme} locale={locale} t={t} />
         <SlotDisplay slots={invoker.slots} scheme={scheme} theme={iconTheme} locale={locale} t={t} cooldowns={cooldowns} />
         <div className="text-sm h-6">
@@ -243,8 +232,20 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
           )}
         </div>
         <SpellHistory spells={spellHistory} theme={iconTheme} locale={locale} />
-        {/* 技能配方参考面板(可切换):配方顺序与帮助页一致,元素用图标 */}
-        {showRecipe && <RecipePanel theme={iconTheme} locale={locale} t={t} />}
+        {/* 技能配方参考面板(可切换):标题行带眼睛按钮控制显示/隐藏 */}
+        <div className="flex flex-col items-center gap-2 w-full max-w-2xl">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-sm text-neutral-300 hover:text-neutral-100"
+            onClick={() => setShowRecipe((v) => !v)}
+            aria-label={t('practice.recipeToggle')}
+            aria-expanded={showRecipe}
+          >
+            <span>{t('recipe.title')}</span>
+            {showRecipe ? <Eye size={14} /> : <EyeOff size={14} />}
+          </button>
+          {showRecipe && <RecipePanel theme={iconTheme} locale={locale} />}
+        </div>
       </div>
     )
   }
