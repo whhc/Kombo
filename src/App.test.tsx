@@ -66,16 +66,16 @@ describe('App — 视图路由 + i18n', () => {
     expect(screen.getByText('Tornado → EMP → Chaos Meteor → Deafening Blast')).toBeInTheDocument()
   })
 
-  it('技能音效开关:齿轮面板内切换 ON/OFF', () => {
+  it('技能音效开关:齿轮面板内切换', () => {
     render(<App />)
     // 打开齿轮设置面板
     fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.title') }))
-    // 技能音效与击杀音效两行都用 soundOff/soundOn aria-label,取第一个(技能音效)
-    const soundBtns = screen.getAllByRole('button', { name: translate('zh', 'settings.soundOff') })
-    expect(soundBtns[0].textContent).toBe('ON')
-    fireEvent.click(soundBtns[0])
-    // 点击后:静音态 OFF
-    const afterBtns = screen.getAllByRole('button', { name: translate('zh', 'settings.soundOn') })
-    expect(afterBtns[0].textContent).toBe('OFF')
+    // 技能音效与击杀音效两行共用 aria-label,取第一个(技能音效)
+    const switches = screen.getAllByRole('switch', { name: translate('zh', 'settings.soundOff') })
+    expect(switches[0]).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(switches[0])
+    // 点击后:关闭态
+    const afterSwitches = screen.getAllByRole('switch', { name: translate('zh', 'settings.soundOn') })
+    expect(afterSwitches[0]).toHaveAttribute('aria-checked', 'false')
   })
 })

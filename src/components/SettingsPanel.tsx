@@ -78,28 +78,42 @@ export function SettingsPanel({ open, onClose, settings, setSettings, locale, to
 
       {/* 技能音效(切球/合成/释放) */}
       <Row icon={settings.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />} label={t('settings.sound')}>
-        <button
-          type="button"
-          className={`px-2 py-0.5 text-xs rounded border ${settings.soundEnabled ? 'border-sky-500/50 text-sky-300 bg-sky-900/20' : 'border-white/20 hover:bg-white/10'}`}
+        <Toggle
+          on={settings.soundEnabled}
           onClick={() => setSettings((prev) => ({ ...prev, soundEnabled: !prev.soundEnabled }))}
-          aria-label={settings.soundEnabled ? t('settings.soundOff') : t('settings.soundOn')}
-        >
-          {settings.soundEnabled ? 'ON' : 'OFF'}
-        </button>
+          labelOn={t('settings.soundOn')}
+          labelOff={t('settings.soundOff')}
+        />
       </Row>
 
       {/* 击杀音效(First Blood/连杀广播) */}
       <Row icon={settings.killSoundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />} label={t('settings.killSound')}>
-        <button
-          type="button"
-          className={`px-2 py-0.5 text-xs rounded border ${settings.killSoundEnabled ? 'border-sky-500/50 text-sky-300 bg-sky-900/20' : 'border-white/20 hover:bg-white/10'}`}
+        <Toggle
+          on={settings.killSoundEnabled}
           onClick={() => setSettings((prev) => ({ ...prev, killSoundEnabled: !prev.killSoundEnabled }))}
-          aria-label={settings.killSoundEnabled ? t('settings.soundOff') : t('settings.soundOn')}
-        >
-          {settings.killSoundEnabled ? 'ON' : 'OFF'}
-        </button>
+          labelOn={t('settings.soundOn')}
+          labelOff={t('settings.soundOff')}
+        />
       </Row>
     </div>
+  )
+}
+
+/** 滑块开关:开=天蓝右移,关=灰色左移。无文字,纯视觉状态 */
+function Toggle({ on, onClick, labelOn, labelOff }: { on: boolean; onClick: () => void; labelOn: string; labelOff: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={on ? labelOff : labelOn}
+      onClick={onClick}
+      className={`relative w-9 h-5 rounded-full transition-colors ${on ? 'bg-sky-600' : 'bg-neutral-600'}`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${on ? 'translate-x-4' : ''}`}
+      />
+    </button>
   )
 }
 
