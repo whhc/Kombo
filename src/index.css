@@ -22,6 +22,19 @@ body,
   outline-offset: 2px;
 }
 
+/*
+ * Tailwind v4 preflight 不再给 button/button-like 元素默认 cursor:pointer,
+ * 显式恢复交互元素的手型光标(按钮、可点击的 label/summary、带 role 的元素)。
+ * disabled 状态保持默认箭头。
+ */
+button:not(:disabled),
+[role='button']:not(:disabled),
+summary,
+label[for],
+select:not(:disabled) {
+  cursor: pointer;
+}
+
 /* 尊重用户的减少动效偏好 */
 @media (prefers-reduced-motion: reduce) {
   *,
