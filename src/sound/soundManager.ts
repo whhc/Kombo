@@ -1,4 +1,5 @@
 import type { SpellName } from '../domain/types'
+import type { KillAnnounce, MultiKillTier, StreakTier } from '../domain/killTier'
 
 /**
  * 音效基础设施层。
@@ -28,29 +29,25 @@ export const SPELL_SOUND: Record<SpellName, string> = {
 /** 合成音(按 R 成功合成技能时播放) */
 export const INVOKE_SOUND = 'sounds/dota2/Invoke.mp3'
 
-/** 连杀音效文件名(后续迭代补音频;未就位时 playKillSound 静默 no-op) */
-export const KILL_SOUND: Partial<Record<KillTier, string>> = {
-  FirstBlood: 'sounds/dota2/First_Blood.mp3',
-  DoubleKill: 'sounds/dota2/Double_Kill.mp3',
-  TripleKill: 'sounds/dota2/Triple_Kill.mp3',
-  UltraKill: 'sounds/dota2/Ultra_Kill.mp3',
-  Rampage: 'sounds/dota2/Rampage.mp3',
+/** 连杀音效(一条命累计:KillingSpree→BeyondGodlike) */
+export const STREAK_SOUND: Record<StreakTier, string> = {
+  KillingSpree: 'sounds/dota2/KillingSpree.mp3',
+  Dominating: 'sounds/dota2/Dominating.mp3',
+  MegaKill: 'sounds/dota2/MegaKill.mp3',
+  Unstoppable: 'sounds/dota2/Unstoppable.mp3',
+  WickedSick: 'sounds/dota2/WickedSick.mp3',
+  MonsterKill: 'sounds/dota2/MonsterKill.mp3',
+  Godlike: 'sounds/dota2/Godlike.mp3',
+  BeyondGodlike: 'sounds/dota2/BeyondGodlike.mp3',
 }
 
-/** 连杀等级 */
-export type KillTier = 'FirstBlood' | 'DoubleKill' | 'TripleKill' | 'UltraKill' | 'Rampage'
-
-/**
- * 连续成功次数 → 连杀等级(Dota2 广播音效序列)。
- * 1=First Blood / 2=Double / 3=Triple / 4=Ultra / 5+=Rampage(暴走)。
- */
-export function streakToTier(streak: number): KillTier | null {
-  if (streak < 1) return null
-  if (streak === 1) return 'FirstBlood'
-  if (streak === 2) return 'DoubleKill'
-  if (streak === 3) return 'TripleKill'
-  if (streak === 4) return 'UltraKill'
-  return 'Rampage'
+/** 多杀音效(18s 窗口:FirstBlood→Rampage) */
+export const MULTI_KILL_SOUND: Record<MultiKillTier, string> = {
+  FirstBlood: 'sounds/dota2/FirstBlood.mp3',
+  DoubleKill: 'sounds/dota2/DoubleKill.mp3',
+  TripleKill: 'sounds/dota2/TripleKill.mp3',
+  UltraKill: 'sounds/dota2/UltraKill.mp3',
+  Rampage: 'sounds/dota2/Rampage.mp3',
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -81,9 +78,14 @@ function ensureLoaded(path: string): HTMLAudioElement | null {
  * 触发浏览器提前解码,避免首次播放延迟。失败静默(资产缺失不阻断启动)。
  */
 export function preloadSounds(): void {
-  const paths = [INVOKE_SOUND, ...Object.values(SPELL_SOUND), ...Object.values(KILL_SOUND)]
+  const paths = [
+    INVOKE_SOUND,
+    ...Object.values(SPELL_SOUND),
+    ...Object.values(STREAK_SOUND),
+    ...Object.values(MULTI_KILL_SOUND),
+  ]
   for (const p of paths) {
-    if (p) try { ensureLoaded(p) } catch { /* 忽略 */ }
+    try { ensureLoaded(p) } catch { /* 忽略 */ }
   }
 }
 
@@ -111,12 +113,10 @@ export function playInvokeSound(enabled: boolean): void {
 }
 
 /**
- * 连杀音效(后续迭代接入)。
- * streak ≥ 1 时播对应等级;音频未就位(资产缺失)静默 no-op。
+ * 击杀播报音效。传入 StreakTracker.onRoundSuccess 返回的 KillAnnounce,
+ * 连杀(streak)与多杀(multi)各自播放,可能两段叠加。enabled=false 时静默。
  */
-export function playKillSound(streak: number, enabled: boolean): void {
-  const tier = streakToTier(streak)
-  if (!tier) return
-  const path = KILL_SOUND[tier]
-  if (path) playPath(path, enabled)
+export function playKillSound(announce: KillAnnounce, enabled: boolean): void {
+  if (announce.streak) playPath(STREAK_SOUND[announce.streak], enabled)
+  if (announce.multi) playPath(MULTI_KILL_SOUND[announce.multi], enabled)
 }

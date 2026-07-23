@@ -76,7 +76,7 @@ export function SettingsPanel({ open, onClose, settings, setSettings, locale, to
         </button>
       </Row>
 
-      {/* 音效 */}
+      {/* 技能音效(切球/合成/释放) */}
       <Row icon={settings.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />} label={t('settings.sound')}>
         <button
           type="button"
@@ -85,6 +85,18 @@ export function SettingsPanel({ open, onClose, settings, setSettings, locale, to
           aria-label={settings.soundEnabled ? t('settings.soundOff') : t('settings.soundOn')}
         >
           {settings.soundEnabled ? 'ON' : 'OFF'}
+        </button>
+      </Row>
+
+      {/* 击杀音效(First Blood/连杀广播) */}
+      <Row icon={settings.killSoundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />} label={t('settings.killSound')}>
+        <button
+          type="button"
+          className={`px-2 py-0.5 text-xs rounded border ${settings.killSoundEnabled ? 'border-sky-500/50 text-sky-300 bg-sky-900/20' : 'border-white/20 hover:bg-white/10'}`}
+          onClick={() => setSettings((prev) => ({ ...prev, killSoundEnabled: !prev.killSoundEnabled }))}
+          aria-label={settings.killSoundEnabled ? t('settings.soundOff') : t('settings.soundOn')}
+        >
+          {settings.killSoundEnabled ? 'ON' : 'OFF'}
         </button>
       </Row>
     </div>

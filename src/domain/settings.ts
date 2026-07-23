@@ -7,8 +7,10 @@ export interface UserSettings {
   keybindScheme: KeybindScheme
   /** 是否显示连招的最优键序提示(求解器输出);默认 true */
   showOptimalPath: boolean
-  /** 是否开启音效(技能释放/合成);默认 true */
+  /** 是否开启技能音效(切球/合成/释放);默认 true */
   soundEnabled: boolean
+  /** 是否开启击杀音效(First Blood/连杀广播);默认 true */
+  killSoundEnabled: boolean
 }
 
 /**
@@ -20,10 +22,11 @@ export function effectiveScheme(s: UserSettings): KeybindScheme {
   return s.iconTheme === 'DOTA1' ? 'LEGACY' : s.keybindScheme
 }
 
-/** 默认设置:DOTA2 图标 + DOTA2 键位(grill 共识) */
+/** 默认设置:DOTA2 图标 + DOTA2 键位 + 双音效默认开(grill 共识) */
 export const DEFAULT_SETTINGS: UserSettings = {
   iconTheme: 'DOTA2',
   keybindScheme: 'DOTA2',
   showOptimalPath: true,
   soundEnabled: true,
+  killSoundEnabled: true,
 }

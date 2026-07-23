@@ -12,7 +12,8 @@ import { solveCombo } from '../domain/solver'
 import type { TargetCombo, SpellName, SessionMetrics } from '../domain/types'
 import { saveSession, localStorageSessionBackend } from '../domain/sessionStore'
 import { spellName as spellNameFn } from '../domain/i18n'
-import { playSpellSound, playInvokeSound } from '../sound/soundManager'
+import { playSpellSound, playInvokeSound, playKillSound } from '../sound/soundManager'
+import { StreakTracker } from '../domain/streakTracker'
 import { Eye, EyeOff, Check, X } from 'lucide-react'
 import type { KeybindScheme } from '../domain/keymap'
 import type { Locale } from '../domain/i18n'
@@ -33,8 +34,10 @@ interface Props {
   showOptimalPath?: boolean
   /** 切换最优键序显示(走 settings 持久化) */
   onToggleOptimalPath?: () => void
-  /** 是否开启音效;默认 false(自由/内嵌模式不传时静音) */
+  /** 是否开启技能音效(切球/合成/释放);默认 false(自由/内嵌模式不传时静音) */
   soundEnabled?: boolean
+  /** 是否开启击杀音效(First Blood/连杀广播);默认 false */
+  killSoundEnabled?: boolean
 }
 
 /**
@@ -43,7 +46,8 @@ interface Props {
  *   combo非空 + 有onQuit → 内嵌模式(Quit退出,不保存不循环)
  *   combo非空 + 无onQuit → 独立模式(自动保存+循环,当前行为)
  */
-export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOptimalPath = false, onToggleOptimalPath, soundEnabled = false }: Props) {
+export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOptimalPath = false, onToggleOptimalPath, soundEnabled = false, killSoundEnabled = false }: Props) {
+  const streakTrackerRef = useRef(new StreakTracker())
   const [invoker, setInvoker] = useState<InvokerState>({ orbs: [], slots: [null, null] })
   const [session, setSession] = useState<SessionState | null>(null)
   const [lastTs, setLastTs] = useState(0)
@@ -67,6 +71,8 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     }
     resetRound(combo)
     setSpellHistory([])
+    // 重新进入连招:重置击杀 streak(含 FirstBlood)
+    streakTrackerRef.current.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [combo])
 
@@ -104,7 +110,8 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
   // 自动保存(独立/内嵌模式均适用,completed 时触发)
   const endSession = () => {
     if (!combo || !session) return
-    const result = finishSession(session, combo, Date.now())
+    const now = Date.now()
+    const result = finishSession(session, combo, now)
     const metrics = evaluateSession(result, combo, scheme)
     const withMetrics = { ...result, metrics }
     saveSession(localStorageSessionBackend, withMetrics)
@@ -112,6 +119,13 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     // 完成态停表(冻结在 evaluator 的精确 durationMs 上)
     stopTimer()
     setElapsedMs(metrics.durationMs)
+    // 击杀 streak:成功 → 推进并播音;失败(自身死亡)→ onFail 重置
+    if (result.status === 'SUCCESS') {
+      const announce = streakTrackerRef.current.onRoundSuccess(now)
+      playKillSound(announce, killSoundEnabled)
+    } else {
+      streakTrackerRef.current.onFail()
+    }
   }
 
   // 组件卸载时清理计时器,避免泄漏

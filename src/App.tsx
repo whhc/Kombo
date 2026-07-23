@@ -108,7 +108,7 @@ function App() {
       <main className="flex-1 overflow-y-auto">
         <div className="flex justify-center w-full py-6">
           {view === 'practice' && (
-            <PlayZone combo={null} scheme={scheme} iconTheme={settings.iconTheme} locale={locale} t={t} soundEnabled={settings.soundEnabled} />
+            <PlayZone combo={null} scheme={scheme} iconTheme={settings.iconTheme} locale={locale} t={t} soundEnabled={settings.soundEnabled} killSoundEnabled={settings.killSoundEnabled} />
           )}
 
           {view === 'combos' && (
@@ -125,6 +125,7 @@ function App() {
                 setSettings((prev) => ({ ...prev, showOptimalPath: !prev.showOptimalPath }))
               }
               soundEnabled={settings.soundEnabled}
+              killSoundEnabled={settings.killSoundEnabled}
             />
           )}
 

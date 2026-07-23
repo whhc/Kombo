@@ -30,7 +30,8 @@ const UI_ZH: Dict = {
   'settings.language': '语言',
   'settings.iconTheme.DOTA1': 'DOTA1',
   'settings.iconTheme.DOTA2': 'DOTA2',
-  'settings.sound': '音效',
+  'settings.sound': '技能音效',
+  'settings.killSound': '击杀音效',
   'settings.soundOn': '开启音效',
   'settings.soundOff': '关闭音效',
 
@@ -157,7 +158,8 @@ const UI_EN: Dict = {
   'settings.language': 'Lang',
   'settings.iconTheme.DOTA1': 'DOTA1',
   'settings.iconTheme.DOTA2': 'DOTA2',
-  'settings.sound': 'Sound',
+  'settings.sound': 'Spell sound',
+  'settings.killSound': 'Kill sound',
   'settings.soundOn': 'Sound on',
   'settings.soundOff': 'Sound off',
 

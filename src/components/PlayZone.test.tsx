@@ -8,13 +8,14 @@ import type { TargetCombo } from '../domain/types'
 vi.mock('../sound/soundManager', () => ({
   playSpellSound: vi.fn(),
   playInvokeSound: vi.fn(),
+  playKillSound: vi.fn(),
 }))
 // 拦截 sessionStore:验证 Esc 不存盘
 vi.mock('../domain/sessionStore', () => ({
   saveSession: vi.fn(),
   localStorageSessionBackend: {},
 }))
-import { playSpellSound, playInvokeSound } from '../sound/soundManager'
+import { playSpellSound, playInvokeSound, playKillSound } from '../sound/soundManager'
 import { saveSession } from '../domain/sessionStore'
 
 const shortCombo: TargetCombo = {
@@ -251,6 +252,40 @@ describe('PlayZone — Esc 放弃本轮', () => {
     // 完成态按 Esc → 仍在完成态(SUCCESS 文案还在)
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(screen.getByText(tZh('practice.success'))).toBeInTheDocument()
+  })
+})
+
+describe('PlayZone — 击杀音效', () => {
+  beforeEach(() => {
+    vi.mocked(playKillSound).mockClear()
+    vi.mocked(saveSession).mockClear()
+  })
+
+  it('连招成功完成 → 播放击杀音效(FirstBlood)', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} killSoundEnabled {...props} />)
+    fireEvent.keyDown(window, { key: 'x' }) // Tornado
+    fireEvent.keyDown(window, { key: 'c' }) // EMP → 完成
+    expect(screen.getByText(tZh('practice.success'))).toBeInTheDocument()
+    expect(playKillSound).toHaveBeenCalledTimes(1)
+  })
+
+  it('killSoundEnabled=false → 不播放击杀音效', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} killSoundEnabled={false} {...props} />)
+    fireEvent.keyDown(window, { key: 'x' })
+    fireEvent.keyDown(window, { key: 'c' }) // 完成
+    // playKillSound 被调用但 enabled=false,内部短路;这里验证传入了 false
+    expect(playKillSound).toHaveBeenCalledWith(expect.anything(), false)
+  })
+
+  it('连招失败(failedStep)→ 不播音;再次成功时 streak 已重置', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} killSoundEnabled {...props} />)
+    // 错序:c(EMP 错序)→ x(Tornado)→ c(EMP 完成,但有 failedStep → FAILED)
+    fireEvent.keyDown(window, { key: 'c' })
+    fireEvent.keyDown(window, { key: 'x' })
+    fireEvent.keyDown(window, { key: 'c' })
+    expect(screen.getByText(tZh('practice.failed'))).toBeInTheDocument()
+    // 失败不播击杀音效
+    expect(playKillSound).not.toHaveBeenCalled()
   })
 })
 

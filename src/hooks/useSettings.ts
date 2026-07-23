@@ -13,6 +13,7 @@ function load(): UserSettings {
         keybindScheme: parsed.keybindScheme === 'LEGACY' ? 'LEGACY' : 'DOTA2',
         showOptimalPath: parsed.showOptimalPath !== false, // 默认 true,仅显式 false 才关
         soundEnabled: parsed.soundEnabled !== false, // 默认 true,仅显式 false 才关
+        killSoundEnabled: parsed.killSoundEnabled !== false, // 默认 true(旧记录无此字段时也开)
       }
     }
   } catch {
