@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Kombo - 卡尔连招模拟器",
+        "title": "Kombo",
         "width": 1000,
         "height": 750,
         "minWidth": 720,
