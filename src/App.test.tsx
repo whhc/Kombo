@@ -66,13 +66,16 @@ describe('App — 视图路由 + i18n', () => {
     expect(screen.getByText('Tornado → EMP → Chaos Meteor → Deafening Blast')).toBeInTheDocument()
   })
 
-  it('静音按钮:默认开启(渲染图标 SVG),点击后切换 aria-label', () => {
+  it('技能音效开关:齿轮面板内切换 ON/OFF', () => {
     render(<App />)
-    // 默认开启音效:aria-label 为"关闭音效"(按钮含义=点击会关闭),渲染 lucide 图标(SVG)
-    const muteBtn = screen.getByRole('button', { name: translate('zh', 'settings.soundOff') })
-    expect(muteBtn.querySelector('svg')).toBeInTheDocument()
-    fireEvent.click(muteBtn)
-    // 点击后:静音态,aria-label 变"开启音效"
-    expect(screen.getByRole('button', { name: translate('zh', 'settings.soundOn') })).toBeInTheDocument()
+    // 打开齿轮设置面板
+    fireEvent.click(screen.getByRole('button', { name: translate('zh', 'settings.title') }))
+    // 技能音效与击杀音效两行都用 soundOff/soundOn aria-label,取第一个(技能音效)
+    const soundBtns = screen.getAllByRole('button', { name: translate('zh', 'settings.soundOff') })
+    expect(soundBtns[0].textContent).toBe('ON')
+    fireEvent.click(soundBtns[0])
+    // 点击后:静音态 OFF
+    const afterBtns = screen.getAllByRole('button', { name: translate('zh', 'settings.soundOn') })
+    expect(afterBtns[0].textContent).toBe('OFF')
   })
 })

@@ -10,7 +10,7 @@ import { useCombos } from './hooks/useCombos'
 import { useSessions } from './hooks/useSessions'
 import { useLocale } from './hooks/useLocale'
 import { preloadSounds } from './sound/soundManager'
-import { Settings, Volume2, VolumeX } from 'lucide-react'
+import { Settings } from 'lucide-react'
 
 type View = 'practice' | 'combos' | 'dashboard' | 'help'
 
@@ -71,17 +71,8 @@ function App() {
           </nav>
         </div>
 
-        {/* 右:音效快捷 + 齿轮 */}
+        {/* 右:设置齿轮(技能/击杀音效在设置面板内切换) */}
         <div className="flex items-center gap-1">
-          {/* 音效快捷切换(保持 settings.soundOff/soundOn aria-label,供测试与无障碍) */}
-          <button
-            type="button"
-            className="p-1.5 rounded hover:bg-white/10"
-            onClick={() => setSettings((prev) => ({ ...prev, soundEnabled: !prev.soundEnabled }))}
-            aria-label={settings.soundEnabled ? t('settings.soundOff') : t('settings.soundOn')}
-          >
-            {settings.soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          </button>
           <button
             type="button"
             className="p-1.5 rounded hover:bg-white/10"
