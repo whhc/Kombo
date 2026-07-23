@@ -46,7 +46,7 @@ export function ComboEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spells])
 
-  const addSpell = (s: SpellName) => setSpells((prev) => [...prev, s])
+  const addSpell = (s: SpellName) => setSpells((prev) => (prev.includes(s) ? prev : [...prev, s]))
   const removeSpellAt = (i: number) => setSpells((prev) => prev.filter((_, idx) => idx !== i))
 
   // 预切约束:DOTA2 真实机制下,新合成技能占据 D 槽,原 D 槽技能被推到 F 槽。
@@ -106,17 +106,22 @@ export function ComboEditor({
       <div className="flex flex-col gap-2">
         <span className="text-sm text-neutral-400">{t('combo.spellSequence')}</span>
         <div className="flex flex-wrap gap-2">
-          {ALL_SPELLS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              className="flex flex-col items-center hover:bg-white/10 rounded p-1"
-              aria-label={`${t('combo.addSpell')} ${spellNameFn(locale, iconTheme, s)}`}
-              onClick={() => addSpell(s)}
-            >
-              <SpellIcon spell={s} tooltipName={spellNameFn(locale, iconTheme, s)} size={36} theme={iconTheme} />
-            </button>
-          ))}
+          {ALL_SPELLS.map((s) => {
+            const used = spells.includes(s)
+            return (
+              <button
+                key={s}
+                type="button"
+                className={`flex flex-col items-center rounded p-1 ${used ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/10'}`}
+                aria-label={`${t('combo.addSpell')} ${spellNameFn(locale, iconTheme, s)}`}
+                title={used ? t('combo.duplicateSpell') : undefined}
+                disabled={used}
+                onClick={() => addSpell(s)}
+              >
+                <SpellIcon spell={s} tooltipName={spellNameFn(locale, iconTheme, s)} size={36} theme={iconTheme} />
+              </button>
+            )
+          })}
         </div>
         <ol className="flex flex-wrap gap-2 mt-1">
           {spells.map((s, i) => (

@@ -253,3 +253,62 @@ describe('PlayZone — Esc 放弃本轮', () => {
     expect(screen.getByText(tZh('practice.success'))).toBeInTheDocument()
   })
 })
+
+describe('PlayZone — 技能冷却', () => {
+  beforeEach(() => {
+    vi.mocked(saveSession).mockClear()
+  })
+
+  it('自由模式:释放技能后 2s 内重复释放被拦截,2s 后恢复', () => {
+    vi.useFakeTimers()
+    try {
+      render(<PlayZone combo={null} scheme={'LEGACY'} soundEnabled {...props} />)
+      vi.mocked(playSpellSound).mockClear()
+
+      // 切 QQQ → 合 ColdSnap(Y 键) → 释放 Y
+      fireEvent.keyDown(window, { key: 'q' })
+      fireEvent.keyDown(window, { key: 'q' })
+      fireEvent.keyDown(window, { key: 'q' })
+      fireEvent.keyDown(window, { key: 'r' }) // 合成 ColdSnap
+      fireEvent.keyDown(window, { key: 'y' }) // 释放 ColdSnap → CAST,进 2s 冷却
+      expect(playSpellSound).toHaveBeenCalledWith('ColdSnap', true)
+
+      // 立刻(<2s)再按 Y → 冷却中,被拦截(playSpellSound 不再被调用)
+      vi.mocked(playSpellSound).mockClear()
+      fireEvent.keyDown(window, { key: 'y' })
+      expect(playSpellSound).not.toHaveBeenCalled()
+
+      // 推进 2s → 冷却结束,再按 Y 可再次释放
+      vi.advanceTimersByTime(2100)
+      fireEvent.keyDown(window, { key: 'y' })
+      expect(playSpellSound).toHaveBeenCalledWith('ColdSnap', true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('不同技能独立冷却:释放 A 不阻塞 B', () => {
+    vi.useFakeTimers()
+    try {
+      render(<PlayZone combo={null} scheme={'LEGACY'} soundEnabled {...props} />)
+      vi.mocked(playSpellSound).mockClear()
+
+      // 合 ColdSnap(YYY R)释放 Y → 冷却
+      fireEvent.keyDown(window, { key: 'q' })
+      fireEvent.keyDown(window, { key: 'q' })
+      fireEvent.keyDown(window, { key: 'q' })
+      fireEvent.keyDown(window, { key: 'r' })
+      fireEvent.keyDown(window, { key: 'y' }) // ColdSnap 释放,冷却
+
+      // 立刻合 SunStrike(EEE T)释放 T → 不受 ColdSnap 冷却影响
+      fireEvent.keyDown(window, { key: 'e' })
+      fireEvent.keyDown(window, { key: 'e' })
+      fireEvent.keyDown(window, { key: 'e' })
+      fireEvent.keyDown(window, { key: 'r' })
+      fireEvent.keyDown(window, { key: 't' }) // SunStrike 释放
+      expect(playSpellSound).toHaveBeenCalledWith('SunStrike', true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})

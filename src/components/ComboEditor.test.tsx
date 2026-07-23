@@ -15,14 +15,16 @@ describe('ComboEditor — 连招编辑器(图标+i18n)', () => {
     expect(screen.getByTitle(/1\.\s*强袭飓风/)).toBeInTheDocument()
   })
 
-  it('允许同一技能重复添加', () => {
+  it('同一技能不允许重复添加(按钮禁用)', () => {
     render(<ComboEditor onSave={() => {}} onCancel={() => {}} {...props} />)
     const btn = screen.getByRole('button', { name: `${tZh('combo.addSpell')} 强袭飓风` })
     fireEvent.click(btn)
+    // 添加后该按钮禁用(disabled),再次点击无效
+    expect(btn).toBeDisabled()
     fireEvent.click(btn)
-    // 两个序号 1. 和 2. 都含强袭飓风
+    // 仍只有一个强袭飓风(序号 1),无序号 2
     expect(screen.getByTitle(/1\.\s*强袭飓风/)).toBeInTheDocument()
-    expect(screen.getByTitle(/2\.\s*强袭飓风/)).toBeInTheDocument()
+    expect(screen.queryByTitle(/2\.\s*强袭飓风/)).not.toBeInTheDocument()
   })
 
   it('序列为空时保存被拦截', () => {

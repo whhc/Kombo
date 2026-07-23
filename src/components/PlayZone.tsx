@@ -18,6 +18,9 @@ import type { KeybindScheme } from '../domain/keymap'
 import type { Locale } from '../domain/i18n'
 import type { IconTheme } from '../domain/icons'
 
+/** 技能冷却时长 2 秒(释放成功后该技能进入冷却) */
+const COOLDOWN_MS = 2000
+
 interface Props {
   combo: TargetCombo | null
   scheme: KeybindScheme
@@ -51,6 +54,8 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
   const [roundStartTs, setRoundStartTs] = useState(0)
   const [elapsedMs, setElapsedMs] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // 技能冷却:技能 → 到期时间戳。释放成功后该技能 2s 冷却,期内拦截释放
+  const [cooldowns, setCooldowns] = useState<Map<SpellName, number>>(new Map())
 
   useEffect(() => {
     if (!combo) {
@@ -75,6 +80,8 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     stopTimer()
     setRoundStartTs(0)
     setElapsedMs(0)
+    // 清空冷却
+    setCooldowns(new Map())
   }
 
   /** 停止计时器 interval(完成态/重置/卸载时调用) */
@@ -143,6 +150,26 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
       if (!result.action) return
       const action = result.action
 
+      // 冷却硬拦截:CAST 时检查该技能是否在冷却期内,是则作废此次释放
+      // (不更新 invoker/slots、不进 session、不播音)
+      if (action.actionType === 'CAST' && action.spellName) {
+        const expiry = cooldowns.get(action.spellName)
+        if (expiry && now < expiry) {
+          return // 冷却中,拦截
+        }
+        // 仅"目标推进释放"触发冷却:连招模式下命中当前目标步才进冷却,
+        // 错序释放不触发(避免阻塞后续合法释放);自由模式无目标,所有 CAST 都触发
+        const isTargetCast =
+          !combo || (session != null && action.spellName === combo.spells[session.progress])
+        if (isTargetCast) {
+          setCooldowns((prev) => {
+            const next = new Map(prev)
+            next.set(action.spellName!, now + COOLDOWN_MS)
+            return next
+          })
+        }
+      }
+
       // 首个有效按键启动计时器(与 evaluator durationMs 口径一致:首有效键起)
       if (combo && roundStartTs === 0) {
         startTimer(now)
@@ -170,7 +197,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [combo, session, invoker, lastTs, scheme, onQuit, finished, soundEnabled, roundStartTs])
+  }, [combo, session, invoker, lastTs, scheme, onQuit, finished, soundEnabled, roundStartTs, cooldowns])
 
   // ─── 自由模式(combo=null) ───
   if (!combo) {
@@ -178,7 +205,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
       <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
         <p className="text-amber-300 text-sm">{t('practice.freePlay')}</p>
         <OrbDisplay orbs={invoker.orbs} theme={iconTheme} locale={locale} t={t} />
-        <SlotDisplay slots={invoker.slots} scheme={scheme} theme={iconTheme} locale={locale} t={t} />
+        <SlotDisplay slots={invoker.slots} scheme={scheme} theme={iconTheme} locale={locale} t={t} cooldowns={cooldowns} />
         <div className="text-sm h-6">
           {lastCast && (
             <span className={lastCast.type === 'CAST' ? 'text-emerald-400' : 'text-rose-400'}>
@@ -225,7 +252,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
         )}
       </p>
       <OrbDisplay orbs={invoker.orbs} theme={iconTheme} locale={locale} t={t} />
-      <SlotDisplay slots={invoker.slots} scheme={scheme} theme={iconTheme} locale={locale} t={t} />
+      <SlotDisplay slots={invoker.slots} scheme={scheme} theme={iconTheme} locale={locale} t={t} cooldowns={cooldowns} />
       <ProgressBar combo={combo} progress={session?.progress ?? 0} failedSteps={session?.failedSteps ?? []} theme={iconTheme} locale={locale} t={t} />
 
       {/* 最优键序提示:练习前作参考(finished 后隐藏避免干扰) */}
