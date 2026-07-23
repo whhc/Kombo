@@ -51,6 +51,8 @@ const UI_ZH: Dict = {
   'practice.quit': '退出',
   'practice.reset': '重置',
   'practice.spellHistory': '释放历史',
+  'practice.recipeToggle': '显示/隐藏技能配方',
+  'recipe.title': '技能配方',
 
   'combo.library': '连招库',
   'combo.new': '新建连招',
@@ -179,6 +181,8 @@ const UI_EN: Dict = {
   'practice.quit': 'Quit',
   'practice.reset': 'Reset',
   'practice.spellHistory': 'Spell history',
+  'practice.recipeToggle': 'Show/hide spell recipes',
+  'recipe.title': 'Spell Recipes',
 
   'combo.library': 'Combo Library',
   'combo.new': 'New combo',
