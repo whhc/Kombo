@@ -50,13 +50,9 @@ function Slot({
   cooldowns?: Map<SpellName, number>
 }) {
   const releaseKey = slotReleaseKey(scheme, index, spell)
-  // 标签:DOTA2 固定 D/F + 顺位描述;LEGACY 显示该技能传统键
-  const label =
-    scheme === 'DOTA2'
-      ? `${releaseKey} · ${index === 0 ? t('slot.first').split(' · ')[1] : t('slot.second').split(' · ')[1]}`
-      : spell
-        ? `${releaseKey} · ${spellNameFn(locale, theme, spell)}`
-        : t('slot.empty')
+  // 标签统一只显示释放键(图标本身已表达技能,技能名走 hover tooltip)
+  //   DOTA2:D / F;LEGACY:该技能传统键(如 X)。空槽显示占位。
+  const label = releaseKey ?? t('slot.empty')
 
   // 该技能的冷却到期时间戳;用 state 驱动遮蔽动画,到期后自动清除
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null)

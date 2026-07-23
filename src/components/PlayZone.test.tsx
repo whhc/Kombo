@@ -159,10 +159,10 @@ describe('PlayZone — 会话与宽松继续(图标+i18n)', () => {
 
   it('DOTA1 主题下 LEGACY 槽位标签显示技能传统键(X/C 而非 D/F)', () => {
     render(<PlayZone combo={shortCombo} scheme={'LEGACY'} locale={ZH_LOCALE} t={tZh} iconTheme={DOTA1_THEME} />)
-    // 预切 Tornado 在第一槽,LEGACY 标签应为 "X · 龙卷风"(DOTA1 旧译)
-    expect(screen.getByText(/X · 龙卷风/)).toBeInTheDocument()
-    // 不应出现误导的 "D · 第一顺位"
-    expect(screen.queryByText(/D · 第一顺位/)).not.toBeInTheDocument()
+    // 预切 Tornado 在第一槽,LEGACY 标签应为释放键 "X"(DOTA1 旧译龙卷风走 tooltip)
+    expect(screen.getByText('X')).toBeInTheDocument()
+    // 不应出现 DOTA2 的 D/F 键
+    expect(screen.queryByText('D')).not.toBeInTheDocument()
   })
 })
 
