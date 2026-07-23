@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { OrbDisplay } from './OrbDisplay'
 import { SlotDisplay } from './SlotDisplay'
 import { ProgressBar } from './ProgressBar'
@@ -47,6 +47,10 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
   const [lastCast, setLastCast] = useState<{ type: 'CAST' | 'MISS_CAST'; spell: SpellName | null } | null>(null)
   const [finished, setFinished] = useState<{ status: 'SUCCESS' | 'FAILED'; metrics: SessionMetrics } | null>(null)
   const [spellHistory, setSpellHistory] = useState<SpellName[]>([])
+  // 实时计时器:首有效键时间戳(0=未开始);elapsedMs 为显示值
+  const [roundStartTs, setRoundStartTs] = useState(0)
+  const [elapsedMs, setElapsedMs] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (!combo) {
@@ -67,6 +71,27 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     setLastTs(0)
     setLastCast(null)
     setFinished(null)
+    // 计时器归零
+    stopTimer()
+    setRoundStartTs(0)
+    setElapsedMs(0)
+  }
+
+  /** 停止计时器 interval(完成态/重置/卸载时调用) */
+  function stopTimer() {
+    if (timerRef.current !== null) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+  }
+
+  /** 首有效键启动计时器 */
+  function startTimer(startTs: number) {
+    setRoundStartTs(startTs)
+    stopTimer()
+    timerRef.current = setInterval(() => {
+      setElapsedMs(Date.now() - startTs)
+    }, 50)
   }
 
   // 自动保存(独立/内嵌模式均适用,completed 时触发)
@@ -77,7 +102,13 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     const withMetrics = { ...result, metrics }
     saveSession(localStorageSessionBackend, withMetrics)
     setFinished({ status: result.status, metrics })
+    // 完成态停表(冻结在 evaluator 的精确 durationMs 上)
+    stopTimer()
+    setElapsedMs(metrics.durationMs)
   }
+
+  // 组件卸载时清理计时器,避免泄漏
+  useEffect(() => () => stopTimer(), [])
 
   useEffect(() => {
     if (!combo) return
@@ -99,11 +130,24 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
+      // Esc:组合模式 + 未完成态时放弃本轮(不存盘静默重置)
+      if (e.key === 'Escape' && combo && !finished) {
+        e.preventDefault()
+        resetRound(combo)
+        return
+      }
+
       const key = e.key.toUpperCase()
       const now = Date.now()
       const result = handleInvokerKey(invoker, key, now, lastTs, scheme)
       if (!result.action) return
       const action = result.action
+
+      // 首个有效按键启动计时器(与 evaluator durationMs 口径一致:首有效键起)
+      if (combo && roundStartTs === 0) {
+        startTimer(now)
+      }
+
       setInvoker(result.state)
       setLastTs(now)
 
@@ -126,7 +170,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [combo, session, invoker, lastTs, scheme, onQuit, finished, soundEnabled])
+  }, [combo, session, invoker, lastTs, scheme, onQuit, finished, soundEnabled, roundStartTs])
 
   // ─── 自由模式(combo=null) ───
   if (!combo) {
@@ -162,6 +206,12 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
       <p className="text-amber-300 text-sm flex items-center gap-2">
         <span>{t('practice.currentCombo')}: {resolveComboName(combo, t, locale, iconTheme)}</span>
+        {/* 实时计时器:首有效键起,完成态停表冻结 */}
+        {roundStartTs > 0 && (
+          <span className="text-sky-300 font-mono text-xs" aria-label={t('practice.timer')}>
+            ⏱ {(elapsedMs / 1000).toFixed(1)}s
+          </span>
+        )}
         {onToggleOptimalPath && (
           <button
             type="button"
@@ -210,11 +260,14 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
           <span className="text-xs text-neutral-500">{t('practice.againHint')}</span>
         </div>
       ) : (
-        <div className="flex gap-2">
-          <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={endSession}>
-            {t('practice.endAndSave')}
-          </button>
-          {showQuit && <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={onQuit}>{t('practice.quit')}</button>}
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="flex gap-2">
+            <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={endSession}>
+              {t('practice.endAndSave')}
+            </button>
+            {showQuit && <button type="button" className="px-3 py-1 text-sm rounded border border-white/20 hover:bg-white/10" onClick={onQuit}>{t('practice.quit')}</button>}
+          </div>
+          <span className="text-xs text-neutral-500">{t('practice.discardHint')}</span>
         </div>
       )}
     </div>

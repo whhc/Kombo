@@ -9,7 +9,13 @@ vi.mock('../sound/soundManager', () => ({
   playSpellSound: vi.fn(),
   playInvokeSound: vi.fn(),
 }))
+// 拦截 sessionStore:验证 Esc 不存盘
+vi.mock('../domain/sessionStore', () => ({
+  saveSession: vi.fn(),
+  localStorageSessionBackend: {},
+}))
 import { playSpellSound, playInvokeSound } from '../sound/soundManager'
+import { saveSession } from '../domain/sessionStore'
 
 const shortCombo: TargetCombo = {
   comboId: 'short',
@@ -193,5 +199,57 @@ describe('PlayZone — 音效注入', () => {
     // 空槽位按 D → MISS_CAST(无技能可放)
     fireEvent.keyDown(window, { key: 'd' })
     expect(playSpellSound).not.toHaveBeenCalled()
+  })
+})
+
+describe('PlayZone — 实时计时器', () => {
+  it('组合模式:首有效键后显示计时器', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} {...props} />)
+    // 初始无计时器
+    expect(screen.queryByLabelText(tZh('practice.timer'))).not.toBeInTheDocument()
+    // 按首个有效键(切球 Q)→ 计时器出现
+    fireEvent.keyDown(window, { key: 'q' })
+    expect(screen.getByLabelText(tZh('practice.timer'))).toBeInTheDocument()
+  })
+
+  it('自由模式:不显示计时器', () => {
+    render(<PlayZone combo={null} scheme={'LEGACY'} {...props} />)
+    fireEvent.keyDown(window, { key: 'q' })
+    expect(screen.queryByLabelText(tZh('practice.timer'))).not.toBeInTheDocument()
+  })
+})
+
+describe('PlayZone — Esc 放弃本轮', () => {
+  beforeEach(() => {
+    vi.mocked(saveSession).mockClear()
+  })
+
+  it('练习中按 Esc:静默重置,不存盘,不显示结果', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} {...props} />)
+    // 按一个释放键(释放预切的 Tornado,推进进度但不完成)
+    fireEvent.keyDown(window, { key: 'x' })
+    // 仍在练习态(有"结束并保存"按钮)
+    expect(screen.getByRole('button', { name: tZh('practice.endAndSave') })).toBeInTheDocument()
+
+    // 按 Esc → 放弃本轮
+    fireEvent.keyDown(window, { key: 'Escape' })
+
+    // 回到起手态:仍有"结束并保存",无 SUCCESS/FAILED 文案
+    expect(screen.getByRole('button', { name: tZh('practice.endAndSave') })).toBeInTheDocument()
+    expect(screen.queryByText(tZh('practice.success'))).not.toBeInTheDocument()
+    expect(screen.queryByText(tZh('practice.failed'))).not.toBeInTheDocument()
+    // 未存盘
+    expect(saveSession).not.toHaveBeenCalled()
+  })
+
+  it('完成态:Esc 无响应(空格重开已占用)', () => {
+    render(<PlayZone combo={shortCombo} scheme={'LEGACY'} {...props} />)
+    fireEvent.keyDown(window, { key: 'x' }) // Tornado
+    fireEvent.keyDown(window, { key: 'c' }) // EMP → 完成
+    expect(screen.getByText(tZh('practice.success'))).toBeInTheDocument()
+
+    // 完成态按 Esc → 仍在完成态(SUCCESS 文案还在)
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.getByText(tZh('practice.success'))).toBeInTheDocument()
   })
 })
