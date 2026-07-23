@@ -16,7 +16,7 @@ export function OrbDisplay({ orbs, theme, locale, t }: Props) {
   const slots: (Element | null)[] = [orbs[0] ?? null, orbs[1] ?? null, orbs[2] ?? null]
 
   return (
-    <div className="flex gap-3" aria-label={t('app.title')}>
+    <div className="flex gap-3" role="group" aria-label={t('orb.group')}>
       {slots.map((orb, i) =>
         orb ? (
           <ElementIcon key={i} element={orb} tooltipName={elementName(locale, orb)} theme={theme} />

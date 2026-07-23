@@ -17,7 +17,7 @@ interface Props {
 /** 双技能槽位:显示该槽位的释放键标签(LEGACY=技能传统键,DOTA2=D/F) */
 export function SlotDisplay({ slots, scheme, theme, locale, t }: Props) {
   return (
-    <div className="flex gap-4" aria-label={t('app.title')}>
+    <div className="flex gap-4" role="group" aria-label={t('slot.group')}>
       <Slot index={0} spell={slots[0]} scheme={scheme} theme={theme} locale={locale} t={t} />
       <Slot index={1} spell={slots[1]} scheme={scheme} theme={theme} locale={locale} t={t} />
     </div>

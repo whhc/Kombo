@@ -63,6 +63,7 @@ const UI_ZH: Dict = {
   'combo.optimalPathHint': '基于切球队列顺序求解的最少按键序列',
   'combo.optimalPathEmpty': '空连招无最优键序',
   'combo.toggleOptimalPath': '显示/隐藏最优键序',
+  'progress.group': '连招进度',
 
   'common.save': '保存连招',
   'common.cancel': '取消',
@@ -99,7 +100,9 @@ const UI_ZH: Dict = {
   'slot.first': 'D · 第一顺位',
   'slot.second': 'F · 第二顺位',
   'slot.empty': '空',
+  'slot.group': '技能槽位',
   'orb.emptySlot': '空槽',
+  'orb.group': '元素球',
 
   // ── 帮助页 ──
   'help.overview.title': '概览',
@@ -178,6 +181,7 @@ const UI_EN: Dict = {
   'combo.optimalPathHint': 'Fewest-keystroke sequence solved by FIFO orb queue',
   'combo.optimalPathEmpty': 'Empty combo has no optimal path',
   'combo.toggleOptimalPath': 'Show/hide optimal path',
+  'progress.group': 'Combo progress',
 
   'common.save': 'Save combo',
   'common.cancel': 'Cancel',
@@ -214,7 +218,9 @@ const UI_EN: Dict = {
   'slot.first': 'D · Slot 1',
   'slot.second': 'F · Slot 2',
   'slot.empty': 'Empty',
+  'slot.group': 'Spell slots',
   'orb.emptySlot': 'Empty',
+  'orb.group': 'Elemental orbs',
 
   // ── Help page ──
   'help.overview.title': 'Overview',
