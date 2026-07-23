@@ -51,7 +51,7 @@ export function Dashboard({ sessions, combos, iconTheme, locale, t }: Props) {
       : null
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-3xl">
+    <div className="flex flex-col gap-4 w-full max-w-5xl px-4">
       {/* 标题行:左侧 combo/时间筛选,右侧成功率徽章 */}
       <div className="flex gap-3 items-center flex-wrap justify-between">
         <div className="flex gap-3 items-center flex-wrap">
@@ -103,8 +103,55 @@ export function Dashboard({ sessions, combos, iconTheme, locale, t }: Props) {
       ) : successOnly.length === 0 ? (
         <p className="text-neutral-400 text-sm">{t('dashboard.noSuccessInRange')}</p>
       ) : (
-        <TrendChart sessions={successOnly} t={t} />
+        <>
+          {/* 汇总卡组:一眼看清当前筛选范围的总览 */}
+          <SummaryCards sessions={filtered} successOnly={successOnly} t={t} />
+          <TrendChart sessions={successOnly} t={t} />
+        </>
       )}
+    </div>
+  )
+}
+
+/** 四个汇总卡:总轮次 / 成功率 / 平均按键达成率 / 最佳速度 */
+function SummaryCards({
+  sessions,
+  successOnly,
+  t,
+}: {
+  sessions: ExecutionSession[]
+  successOnly: ExecutionSession[]
+  t: (key: string) => string
+}) {
+  const total = sessions.length
+  const okCount = successOnly.length
+  const rate = total > 0 ? Math.round((okCount / total) * 100) : 0
+
+  // 平均按键达成率(只看成功轮次的有效 keyRatio)
+  const keyRatios = successOnly
+    .map((s) => s.metrics?.keyRatio)
+    .filter((v): v is number => v != null)
+  const avgKeyRatio = keyRatios.length > 0 ? Math.round((keyRatios.reduce((a, b) => a + b, 0) / keyRatios.length) * 100) : 0
+
+  // 最佳速度(成功轮次中最快用时,单位 ms → s)
+  const durations = successOnly.map((s) => s.metrics?.durationMs ?? 0).filter((d) => d > 0)
+  const bestMs = durations.length > 0 ? Math.min(...durations) : 0
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <Card label={t('dashboard.totalRounds')} value={String(total)} />
+      <Card label={t('dashboard.successRate')} value={`${rate}%`} accent={rate >= 80 ? 'text-emerald-300' : rate >= 50 ? 'text-amber-300' : 'text-rose-300'} />
+      <Card label={t('metrics.keyRatio')} value={`${avgKeyRatio}%`} accent="text-sky-300" />
+      <Card label={t('dashboard.bestSpeed')} value={bestMs > 0 ? `${(bestMs / 1000).toFixed(1)}s` : '—'} accent="text-fuchsia-300" />
+    </div>
+  )
+}
+
+function Card({ label, value, accent = 'text-neutral-100' }: { label: string; value: string; accent?: string }) {
+  return (
+    <div className="flex flex-col gap-0.5 p-3 rounded bg-neutral-900/60 border border-white/10">
+      <span className="text-neutral-400 text-xs">{label}</span>
+      <span className={`text-xl font-semibold ${accent}`}>{value}</span>
     </div>
   )
 }
@@ -116,7 +163,11 @@ function TrendChart({ sessions, t }: { sessions: ExecutionSession[]; t: (key: st
   useEffect(() => {
     if (!ref.current) return
     chartRef.current = echarts.init(ref.current, undefined, { renderer: 'svg' })
+    // 窗口缩放时图表自适应
+    const onResize = () => chartRef.current?.resize()
+    window.addEventListener('resize', onResize)
     return () => {
+      window.removeEventListener('resize', onResize)
       chartRef.current?.dispose()
       chartRef.current = null
     }
@@ -206,5 +257,5 @@ function TrendChart({ sessions, t }: { sessions: ExecutionSession[]; t: (key: st
 
   if (sessions.length === 0) return null
 
-  return <div ref={ref} className="w-full h-72" aria-label="成长趋势图" />
+  return <div ref={ref} className="w-full h-72 md:h-80" aria-label="成长趋势图" />
 }

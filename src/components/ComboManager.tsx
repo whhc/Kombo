@@ -74,7 +74,7 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
 
   // 列表
   return (
-    <div className="flex flex-col gap-3 max-w-2xl w-full">
+    <div className="flex flex-col gap-4 max-w-5xl w-full px-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">{t('combo.library')}</h2>
         <button
@@ -85,43 +85,42 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
           {t('combo.new')}
         </button>
       </div>
-      <ul className="flex flex-col gap-2">
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {combos.map((c) => (
           <li
             key={c.comboId}
-            className="flex flex-col gap-2 p-3 rounded bg-neutral-800 border border-white/10"
+            className="flex flex-col gap-3 p-3 rounded bg-neutral-800 border border-white/10"
           >
-            <div className="flex items-start justify-between gap-3 flex-wrap">
-              <div className="flex flex-col gap-1 min-w-0 flex-1">
-                <span className="font-medium break-words">{resolveComboName(c, t, locale, iconTheme)}</span>
-                <span className="flex items-center gap-1 text-xs text-neutral-400 flex-wrap">
-                  {c.spells.map((s, i) => (
-                    <SpellIcon key={i} spell={s} tooltipName={spellNameFn(locale, iconTheme, s)} size={20} theme={iconTheme} className="opacity-80" />
-                  ))}
-                  {(c.preCastSlots.d || c.preCastSlots.f) && (
-                    <span className="ml-2 text-amber-400">
-                      {t('combo.preCastLabel')}:
-                      {/* 显示顺序 = 释放顺序:f(先释放) / d(后释放) */}
-                      {[c.preCastSlots.f && spellNameFn(locale, iconTheme, c.preCastSlots.f), c.preCastSlots.d && spellNameFn(locale, iconTheme, c.preCastSlots.d)].filter(Boolean).join(' / ')}
-                    </span>
-                  )}
-                </span>
-              </div>
-              <div className="flex gap-2 shrink-0">
-                <button type="button" className="px-2 py-1 text-xs rounded bg-sky-600 hover:bg-sky-500" onClick={() => setPracticing(c)}>
-                  {t('combo.practice')}
-                </button>
-                <button type="button" className="px-2 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setEditing(c)}>
-                  {t('combo.edit')}
-                </button>
-                <button type="button" className="px-2 py-1 text-xs rounded bg-rose-700 hover:bg-rose-600" onClick={() => onDelete(c.comboId)}>
-                  ×
-                </button>
-              </div>
+            <div className="flex flex-col gap-1 min-w-0">
+              <span className="font-medium break-words">{resolveComboName(c, t, locale, iconTheme)}</span>
+              <span className="flex items-center gap-1 text-xs text-neutral-400 flex-wrap">
+                {c.spells.map((s, i) => (
+                  <SpellIcon key={i} spell={s} tooltipName={spellNameFn(locale, iconTheme, s)} size={20} theme={iconTheme} className="opacity-80" />
+                ))}
+                {(c.preCastSlots.d || c.preCastSlots.f) && (
+                  <span className="ml-2 text-amber-400">
+                    {t('combo.preCastLabel')}:
+                    {/* 显示顺序 = 释放顺序:f(先释放) / d(后释放) */}
+                    {[c.preCastSlots.f && spellNameFn(locale, iconTheme, c.preCastSlots.f), c.preCastSlots.d && spellNameFn(locale, iconTheme, c.preCastSlots.d)].filter(Boolean).join(' / ')}
+                  </span>
+                )}
+              </span>
             </div>
             {showOptimalPath && (
               <ComboOptimalPath combo={c} scheme={scheme} iconTheme={iconTheme} locale={locale} />
             )}
+            {/* 按钮组固定在卡片底部 */}
+            <div className="flex gap-2 mt-auto">
+              <button type="button" className="flex-1 px-2 py-1 text-xs rounded bg-sky-600 hover:bg-sky-500" onClick={() => setPracticing(c)}>
+                {t('combo.practice')}
+              </button>
+              <button type="button" className="px-2 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setEditing(c)}>
+                {t('combo.edit')}
+              </button>
+              <button type="button" className="px-2 py-1 text-xs rounded bg-rose-700 hover:bg-rose-600" onClick={() => onDelete(c.comboId)}>
+                ×
+              </button>
+            </div>
           </li>
         ))}
         {combos.length === 0 && <li className="text-neutral-500 text-sm">{t('combo.empty')}</li>}
