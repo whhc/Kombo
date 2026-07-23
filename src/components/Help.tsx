@@ -55,6 +55,7 @@ export function Help({ iconTheme, locale, t }: Props) {
         <ul className="list-disc list-inside space-y-1 text-neutral-300">
           <li>{t('help.practice.keys')}</li>
           <li>{t('help.practice.freePlay')}</li>
+          <li>{t('help.practice.recipe')}</li>
           <li>{t('help.practice.comboFlow')}</li>
           <li>{t('help.practice.finished')}</li>
           <li>{t('help.practice.space')}</li>

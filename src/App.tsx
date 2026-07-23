@@ -44,7 +44,7 @@ function App() {
               })
             }}
           />
-          <h1 className="text-base font-bold hidden sm:block">{t('app.title')}</h1>
+          <h1 className="text-base font-bold hidden sm:block">Kombo</h1>
           <nav className="flex gap-1 text-sm" aria-label={t('nav.aria')}>
             {([
               ['practice', t('nav.practice')],
