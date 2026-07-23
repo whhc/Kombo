@@ -62,3 +62,8 @@ select:not(:disabled) {
     box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
   }
 }
+
+/* 应用脉冲动画的 class(挂在新球的容器上)。延迟 0.15s 让左移动画先完成。 */
+.orb-pulse {
+  animation: orb-pulse 0.7s ease-out 0.15s 1;
+}
