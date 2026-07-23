@@ -15,6 +15,11 @@ interface Props {
 export function Help({ iconTheme, locale, t }: Props) {
   return (
     <div className="flex flex-col gap-6 w-full max-w-3xl text-sm leading-relaxed">
+      {/* 关于 */}
+      <Section title={t('help.about.title')}>
+        <p>{t('help.about.body')}</p>
+      </Section>
+
       {/* 概览 */}
       <Section title={t('help.overview.title')}>
         <p>{t('help.overview.body')}</p>

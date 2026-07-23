@@ -117,6 +117,8 @@ const UI_ZH: Dict = {
   'orb.group': '元素球',
 
   // ── 帮助页 ──
+  'help.about.title': '关于 Kombo',
+  'help.about.body': 'Kombo 是一个卡尔(Invoker)连招练习模拟器:在桌面端模拟切球(Quas/Wex/Exort)、祈唤(Invoke)、释放(Cast)的完整链路,支持连招编辑、最优按键求解、自动统计与趋势复盘,帮助玩家在脱离游戏对局的环境下反复打磨连招手感。',
   'help.overview.title': '概览',
   'help.overview.body': '卡尔(Invoker)通过组合三元素球,再按 R 祈唤,合成 10 种技能。释放键:DOTA2 模式下 D = 第一槽、F = 第二槽;LEGACY 模式下每个技能有专属键。',
   'help.overview.fifo': '法球是 FIFO 队列(最多 3 个):新球入队尾,队首被挤出。球序在合成后完整保留,直接影响下一技能的最少切球数。',
@@ -248,6 +250,8 @@ const UI_EN: Dict = {
   'orb.group': 'Elemental orbs',
 
   // ── Help page ──
+  'help.about.title': 'About Kombo',
+  'help.about.body': 'Kombo is an Invoker combo practice simulator: a desktop app that simulates the full chain of orb-switching (Quas/Wex/Exort), invoking, and casting. It supports combo editing, optimal-keystroke solving, automatic statistics, and trend review — helping players drill combo muscle memory outside of live game matches.',
   'help.overview.title': 'Overview',
   'help.overview.body': 'Invoker combines three elemental orbs, then presses R to invoke one of 10 spells. Cast keys: in DOTA2 mode, D = slot 1 and F = slot 2; in LEGACY mode, each spell has its own dedicated key.',
   'help.overview.fifo': 'Orbs form a FIFO queue (max 3): new orbs enqueue at the tail, the head is pushed out. Orb order is preserved after invoking, directly affecting the next spell\'s minimal orb switches.',
