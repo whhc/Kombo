@@ -3,7 +3,7 @@ import type { TargetCombo, SpellName } from '../domain/types'
 import { ALL_SPELLS } from '../domain/spellNames'
 import { SpellIcon } from './SpellIcon'
 import { spellName as spellNameFn } from '../domain/i18n'
-import { isAutoName } from '../domain/resolveComboName'
+import { isAutoName, resolveComboName } from '../domain/resolveComboName'
 import { solveCombo } from '../domain/solver'
 import { OptimalPathDisplay } from './OptimalPathDisplay'
 import type { Locale } from '../domain/i18n'
@@ -32,19 +32,34 @@ export function ComboEditor({
   onCancel,
   scheme,
 }: Props) {
-  const [name, setName] = useState(initial?.name ?? '')
+  // name 存"显示值"(友好名或自定义名)。auto.* 初始化时解析为技能全称展示。
+  // isAutoTracking 标记是否处于自动命名模式(spells 变化时自动更新友好名;
+  // 用户手动改名后置 false,保存时用自定义名,否则存 auto. 格式保持动态跟随主题/语言)。
+  const initialAutoName = initial ? isAutoName(initial.name) : false
+  const initialDisplayName = initial
+    ? initialAutoName
+      ? resolveComboName(initial, t, locale, iconTheme)
+      : initial.name
+    : ''
+  const [name, setName] = useState(initialDisplayName)
+  const [isAutoTracking, setIsAutoTracking] = useState(initialAutoName || initialDisplayName === '')
   const [spells, setSpells] = useState<SpellName[]>(initial?.spells ?? [])
   const [preD, setPreD] = useState<SpellName | ''>(initial?.preCastSlots.d ?? '')
   const [preF, setPreF] = useState<SpellName | ''>(initial?.preCastSlots.f ?? '')
 
-  // 自动命名:spells 变化时若 name 为空或以 auto./preset. 开头,自动填入
+  // 自动命名:spells 变化时若处于自动模式,用技能全称拼友好名展示
   useEffect(() => {
-    if (spells.length === 0) return
-    if (name === '' || isAutoName(name)) {
-      setName('auto.' + spells.join('.'))
-    }
+    if (spells.length === 0 || !isAutoTracking) return
+    const friendly = spells.map((s) => spellNameFn(locale, iconTheme, s)).join(' → ')
+    setName(friendly)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spells])
+  }, [spells, isAutoTracking])
+
+  /** 用户手动编辑名称 → 退出自动模式 */
+  const onNameChange = (v: string) => {
+    setIsAutoTracking(false)
+    setName(v)
+  }
 
   const addSpell = (s: SpellName) => setSpells((prev) => (prev.includes(s) ? prev : [...prev, s]))
   const removeSpellAt = (i: number) => setSpells((prev) => prev.filter((_, idx) => idx !== i))
@@ -65,9 +80,11 @@ export function ComboEditor({
     const preCastSlots: TargetCombo['preCastSlots'] = {}
     if (preD && preD === validD) preCastSlots.d = preD
     if (preF && preF === validF) preCastSlots.f = preF
+    // 自动模式 → 存 auto. 格式(动态跟随主题/语言);否则存用户自定义名
+    const savedName = isAutoTracking ? 'auto.' + spells.join('.') : (name.trim() || 'auto.' + spells.join('.'))
     onSave({
       comboId: initial?.comboId ?? `combo-${Date.now()}`,
-      name: name.trim() || t('combo.new'),
+      name: savedName,
       spells,
       preCastSlots,
     })
@@ -98,8 +115,9 @@ export function ComboEditor({
         <input
           className="bg-neutral-800 px-2 py-1 rounded text-neutral-100"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => onNameChange(e.target.value)}
           aria-label={t('combo.name')}
+          placeholder={t('combo.namePlaceholder')}
         />
       </label>
 

@@ -35,6 +35,7 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
   const [editing, setEditing] = useState<TargetCombo | null>(null)
   const [creating, setCreating] = useState(false)
   const [practicing, setPracticing] = useState<TargetCombo | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<TargetCombo | null>(null)
 
   // 编辑/新建优先
   if (creating || editing) {
@@ -121,7 +122,7 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
               <button type="button" className="px-2 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setEditing(c)}>
                 {t('combo.edit')}
               </button>
-              <button type="button" className="flex items-center justify-center px-2 py-1 text-xs rounded bg-rose-700 hover:bg-rose-600" onClick={() => onDelete(c.comboId)} aria-label={t('combo.delete')}>
+              <button type="button" className="flex items-center justify-center px-2 py-1 text-xs rounded bg-rose-700 hover:bg-rose-600" onClick={() => setPendingDelete(c)} aria-label={t('combo.delete')}>
                 <Trash2 size={14} />
               </button>
             </div>
@@ -129,6 +130,36 @@ export function ComboManager({ combos, onSave, onDelete, scheme, iconTheme, loca
         ))}
         {combos.length === 0 && <li className="text-neutral-500 text-sm">{t('combo.empty')}</li>}
       </ul>
+
+      {/* 删除确认弹窗 */}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setPendingDelete(null)}>
+          <div
+            className="max-w-xs p-4 rounded-lg bg-neutral-900 border border-white/15 shadow-xl flex flex-col gap-3 text-sm"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label={t('combo.deleteConfirm')}
+          >
+            <p className="text-neutral-200">{t('combo.deleteConfirm')}</p>
+            <p className="text-neutral-400 text-xs break-words">{resolveComboName(pendingDelete, t, locale, iconTheme)}</p>
+            <div className="flex gap-2 justify-end">
+              <button type="button" className="px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10" onClick={() => setPendingDelete(null)}>
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 text-xs rounded bg-rose-700 hover:bg-rose-600"
+                onClick={() => {
+                  onDelete(pendingDelete.comboId)
+                  setPendingDelete(null)
+                }}
+              >
+                {t('combo.delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
