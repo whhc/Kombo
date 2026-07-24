@@ -1,6 +1,6 @@
 # Kombo - 卡尔连招模拟器
 
-> [English](./README.en.md) | 简体中文
+> [English](./README.en.md) | 简体中文 | 💝 [赞助 Sponsor](https://ifdian.net/a/kombo)
 
 一个给 Dota/Dota2 卡尔(Invoker)爱好者的桌面练习工具。模拟切球(Quas/Wex/Exort)、祈唤(Invoke)、释放(Cast)的完整链路,支持连招编辑、最优按键求解、自动统计、趋势复盘。
 

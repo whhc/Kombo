@@ -1,6 +1,6 @@
 # Kombo - Invoker Combo Simulator
 
-> English | [简体中文](./README.md)
+> English | [简体中文](./README.md) | 💝 [赞助 Sponsor](https://ifdian.net/a/kombo)
 
 A desktop practice tool for Dota/Dota2 Invoker enthusiasts. Simulates the full chain of orb-switching (Quas/Wex/Exort), invoking, and casting — with combo editing, optimal-keystroke solving, automatic statistics, and trend review.
 
