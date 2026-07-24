@@ -20,12 +20,14 @@ import type { KeybindScheme } from './keymap'
  *   - 这与 doc.md §4.2 维度②口径一致
  *   - 不模拟冷却,不利用"连续 INVOKE 刷槽"等实战不存在的情况
  *
- * 四级词典裁决(切球数相同时的 tie-breaking,符合人体工学):
+ * 五级词典裁决(切球数相同时的 tie-breaking,符合人体工学):
  *   - Primary = 切球次数(必须最优,决定 orbSwitches)
  *   - Secondary2 = 累计切球字典序(每个技能完成时的累计切球数,越早的技能越少越好;
  *     如 2+2 胜过 3+1,因为技能 0 只切 2 球而非 3 球)
  *   - Secondary = 相邻切球键不同次数("重复按键放在一起"分组偏好;EEW 胜过 EWE)
  *   - Tertiary = 合成时刻球序与规范配方 SPELL_RECIPE 的位置不匹配数(EEW 胜过 WEE)
+ *   - Quaternary = 每段切球键的 QWE 字典序(仅在前四级都相同时生效;QW 胜过 WQ。
+ *     不影响衔接/配方的等价路径间,偏好 QWE 顺序更符合直觉)
  *   R/CAST 后重置 secondary 上下文(prevOrb=null),分组在每个切球 run 内独立生效。
  *
  * 约束(已与用户对齐):
@@ -84,9 +86,17 @@ const ORB_KEYS: ReadonlyArray<'Q' | 'W' | 'E'> = ['Q', 'W', 'E']
  * 用结构化对象比较(非标量编码)避免累计切球字典序的数值溢出。
  */
 
-/** 合成时刻:3 球队列 vs 规范配方的逐位不匹配数(tertiary 增量) */
+/**
+ * 合成时刻:3 球队列 vs 规范配方的逐位不匹配数(tertiary 增量)。
+ *
+ * 仅当配方含重复元素时才有意义(如 WWQ:偏好 WWQ 跟随配方而非 QWW)。
+ * 三元素各不相同的配方(如 QWE)所有排列等价,tertiary 返回 0,
+ * 交给 segHistory(QWE 字典序)裁决——这样 QW 胜过 WQ。
+ */
 function recipeMismatchDelta(orbs: Element[], spell: SpellName): number {
   const recipe = SPELL_RECIPE[spell]
+  // 三元素各不相同 → 排列等价,不参与 tertiary
+  if (recipe[0] !== recipe[1] && recipe[1] !== recipe[2] && recipe[0] !== recipe[2]) return 0
   let mismatch = 0
   for (let i = 0; i < orbs.length; i++) {
     if (orbs[i] !== recipe[i]) mismatch++
@@ -188,15 +198,18 @@ export function solveCombo(
     cumulativeOrbs: [],
   }
 
-  // ── Dijkstra:四级词典裁决代价 ────────────────────────────────
-  // 用结构化比较(非标量编码)避免 cumulativeOrbs 字典序编码的数值溢出。
-  // 四级:primary(总切球) > secondary2(累计切球字典序) > secondary(分组) > tertiary(配方)
-  interface Cost { primary: number; cumOrbs: number[]; secondary: number; tertiary: number }
+  // ── Dijkstra:五级词典裁决代价 ────────────────────────────────
+  // 用结构化比较(非标量编码)避免累计切球字典序编码的数值溢出。
+  // 五级:primary(总切球) > cumulativeOrbs(累计切球字典序) > secondary(分组)
+  //       > tertiary(配方匹配) > segKeyHistory(每段切球键 QWE 字典序,仅在前四级都相同时生效)
+  // 注:QWE 字典序是最低优先级 tie-break——只在切球数/累计/分组/配方都相同时
+  //    才让 QW 优于 WQ。若 WQ 能让后续少切球或更贴配方,自然胜出(前四级保证)。
+  interface Cost { primary: number; cumOrbs: number[]; secondary: number; tertiary: number; segCur: string; segHistory: string[] }
   type Frontier = { state: SearchState; steps: SolverStep[]; cost: Cost }
   const visited = new Set<string>()
   const heap: Frontier[] = []
 
-  /** 四级字典序比较 c1 < c2 */
+  /** 五级字典序比较 c1 < c2 */
   function costLess(c1: Cost, c2: Cost): boolean {
     if (c1.primary !== c2.primary) return c1.primary < c2.primary
     // 累计切球字典序:逐位比较(长度可能不同,短的较小位补 0 等价)
@@ -207,7 +220,17 @@ export function solveCombo(
       if (a !== b) return a < b
     }
     if (c1.secondary !== c2.secondary) return c1.secondary < c2.secondary
-    return c1.tertiary < c2.tertiary
+    if (c1.tertiary !== c2.tertiary) return c1.tertiary < c2.tertiary
+    // 每段切球键 QWE 字典序:逐段比较(已完成的段),当前未完成段(segCur)也参与
+    const all1 = [...c1.segHistory, c1.segCur]
+    const all2 = [...c2.segHistory, c2.segCur]
+    const m = Math.max(all1.length, all2.length)
+    for (let i = 0; i < m; i++) {
+      const a = all1[i] ?? ''
+      const b = all2[i] ?? ''
+      if (a !== b) return a < b
+    }
+    return false
   }
 
   const pushHeap = (f: Frontier) => {
@@ -217,7 +240,7 @@ export function solveCombo(
     heap.splice(i, 0, f)
   }
 
-  heap.push({ state: start, steps: preCastSteps, cost: { primary: 0, cumOrbs: [], secondary: 0, tertiary: 0 } })
+  heap.push({ state: start, steps: preCastSteps, cost: { primary: 0, cumOrbs: [], secondary: 0, tertiary: 0, segCur: '', segHistory: [] } })
 
   while (heap.length > 0) {
     const { state, steps, cost } = heap.shift()!
@@ -259,7 +282,7 @@ export function solveCombo(
         pushHeap({
           state: ns,
           steps: [...steps, { kind: 'ORB', key: el }],
-          cost: { ...cost, primary: cost.primary + 1, secondary: cost.secondary + adjDelta },
+          cost: { ...cost, primary: cost.primary + 1, secondary: cost.secondary + adjDelta, segCur: cost.segCur + el },
         })
       }
     }
@@ -313,7 +336,7 @@ export function solveCombo(
       pushHeap({
         state: ns,
         steps: [...steps, { kind: 'CAST', key: castKey, spell: nextTarget }],
-        cost: { ...cost, cumOrbs: ns.cumulativeOrbs },
+        cost: { ...cost, segCur: '', segHistory: [...cost.segHistory, cost.segCur], cumOrbs: ns.cumulativeOrbs },
       })
     }
   }
