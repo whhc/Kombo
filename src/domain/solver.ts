@@ -20,9 +20,11 @@ import type { KeybindScheme } from './keymap'
  *   - 这与 doc.md §4.2 维度②口径一致
  *   - 不模拟冷却,不利用"连续 INVOKE 刷槽"等实战不存在的情况
  *
- * 三级词典裁决(切球数相同时的 tie-breaking,符合人体工学):
+ * 四级词典裁决(切球数相同时的 tie-breaking,符合人体工学):
  *   - Primary = 切球次数(必须最优,决定 orbSwitches)
- *   - Secondary = 相邻切球键不同次数("重复按键放一起"分组偏好;EEW 胜过 EWE)
+ *   - Secondary2 = 累计切球字典序(每个技能完成时的累计切球数,越早的技能越少越好;
+ *     如 2+2 胜过 3+1,因为技能 0 只切 2 球而非 3 球)
+ *   - Secondary = 相邻切球键不同次数("重复按键放在一起"分组偏好;EEW 胜过 EWE)
  *   - Tertiary = 合成时刻球序与规范配方 SPELL_RECIPE 的位置不匹配数(EEW 胜过 WEE)
  *   R/CAST 后重置 secondary 上下文(prevOrb=null),分组在每个切球 run 内独立生效。
  *
@@ -57,9 +59,13 @@ interface SearchState {
   pendingInvoke: SpellName | null
   /** 上一个 ORB 键;用于"重复按键分组"裁决。R/CAST 后置 null(重置分组上下文) */
   prevOrb: Element | null
+  /** 每个已完成技能释放时的累计切球数(长度 == progress);用于"累计切球字典序"裁决 */
+  cumulativeOrbs: number[]
 }
 
-/** 序列化为哈希 key(prevOrb 入 key,使不同分组路径都能被探索,不被 visited 丢弃) */
+/** 序列化为哈希 key(prevOrb 入 key,使不同分组路径都能被探索,不被 visited 丢弃)。
+ *  注意:cumulativeOrbs 不入 key——同 (orbs,progress,slots,pending,prevOrb) 状态下,
+ *  cumulativeOrbs 由 cost 独立裁决,入 key 会过度分裂状态空间。 */
 function stateKey(s: SearchState): string {
   return `${s.orbs.join('')}|${s.progress}|${s.slots[0] ?? '_'}>${s.slots[1] ?? '_'}|${s.pendingInvoke ?? '_'}|${s.prevOrb ?? '_'}`
 }
@@ -67,15 +73,16 @@ function stateKey(s: SearchState): string {
 const ORB_KEYS: ReadonlyArray<'Q' | 'W' | 'E'> = ['Q', 'W', 'E']
 
 /**
- * 复合代价(三级词典裁决),编码为单个大数以便堆排序:
- *   encoded = primary * BIG² + secondary * BIG + tertiary
- * 字典序 = 数值序。各级均有界(切球 ≤ 3×spells,分组切换 ≤ 切球数,
- * 不匹配 ≤ 3×spells),BIG=1024 足够。
+ * 复合代价(四级词典裁决),编码为单个大数以便堆排序:
+ *   encoded = primary * BIG³ + secondary2 * BIG² + secondary * BIG + tertiary
+ * 字典序 = 数值序。
  *   - Primary = 切球次数(必须最优,决定 orbSwitches)
- *   - Secondary = 相邻切球键不同次数("重复按键放一起"分组偏好)
+ *   - Secondary2 = 累计切球字典序(每个技能完成时的累计切球数编码;越早少切越好)
+ *   - Secondary = 相邻切球键不同次数("重复按键放在一起"分组偏好)
  *   - Tertiary = 合成时刻球序与规范配方 SPELL_RECIPE 的位置不匹配总数
+ * 各级均有界:切球 ≤ 3×spells,累计 ≤ 30/spell。
+ * 用结构化对象比较(非标量编码)避免累计切球字典序的数值溢出。
  */
-const COST_BIG = 1024
 
 /** 合成时刻:3 球队列 vs 规范配方的逐位不匹配数(tertiary 增量) */
 function recipeMismatchDelta(orbs: Element[], spell: SpellName): number {
@@ -178,23 +185,39 @@ export function solveCombo(
     slots: startSlots,
     pendingInvoke: null,
     prevOrb: null, // 预切起手不算"上一个 ORB",首个切球 run 从零开始分组
+    cumulativeOrbs: [],
   }
 
-  // ── Dijkstra:三级词典裁决代价,堆按编码后的单一数值升序 ─────────
-  type Frontier = { state: SearchState; steps: SolverStep[]; cost: number /* encodeCost 后 */ }
+  // ── Dijkstra:四级词典裁决代价 ────────────────────────────────
+  // 用结构化比较(非标量编码)避免 cumulativeOrbs 字典序编码的数值溢出。
+  // 四级:primary(总切球) > secondary2(累计切球字典序) > secondary(分组) > tertiary(配方)
+  interface Cost { primary: number; cumOrbs: number[]; secondary: number; tertiary: number }
+  type Frontier = { state: SearchState; steps: SolverStep[]; cost: Cost }
   const visited = new Set<string>()
   const heap: Frontier[] = []
+
+  /** 四级字典序比较 c1 < c2 */
+  function costLess(c1: Cost, c2: Cost): boolean {
+    if (c1.primary !== c2.primary) return c1.primary < c2.primary
+    // 累计切球字典序:逐位比较(长度可能不同,短的较小位补 0 等价)
+    const n = Math.max(c1.cumOrbs.length, c2.cumOrbs.length)
+    for (let i = 0; i < n; i++) {
+      const a = c1.cumOrbs[i] ?? 0
+      const b = c2.cumOrbs[i] ?? 0
+      if (a !== b) return a < b
+    }
+    if (c1.secondary !== c2.secondary) return c1.secondary < c2.secondary
+    return c1.tertiary < c2.tertiary
+  }
+
   const pushHeap = (f: Frontier) => {
-    // 插入排序按 encoded cost 升序(状态数 < 1 万,简单数组够用)
+    // 插入排序按 costLess 升序(状态数 < 1 万,简单数组够用)
     let i = 0
-    while (i < heap.length && heap[i].cost <= f.cost) i++
+    while (i < heap.length && costLess(heap[i].cost, f.cost)) i++
     heap.splice(i, 0, f)
   }
 
-  /** 解码 encoded cost 的 primary(切球数) */
-  const primaryOf = (c: number) => Math.floor(c / (COST_BIG * COST_BIG))
-
-  heap.push({ state: start, steps: preCastSteps, cost: 0 })
+  heap.push({ state: start, steps: preCastSteps, cost: { primary: 0, cumOrbs: [], secondary: 0, tertiary: 0 } })
 
   while (heap.length > 0) {
     const { state, steps, cost } = heap.shift()!
@@ -210,7 +233,7 @@ export function solveCombo(
 
     // 目标:所有目标技能都已释放
     if (current.progress === spells.length) {
-      return { steps, orbSwitches: primaryOf(cost), startingOrbs: start.orbs }
+      return { steps, orbSwitches: cost.primary, startingOrbs: start.orbs }
     }
 
     const nextTarget = spells[current.progress]
@@ -230,12 +253,13 @@ export function solveCombo(
           slots: current.slots,
           pendingInvoke: null,
           prevOrb: el, // 记录本次切球键,供下一步分组裁决
+          cumulativeOrbs: current.cumulativeOrbs,
         }
         const adjDelta = current.prevOrb !== null && current.prevOrb !== el ? 1 : 0
         pushHeap({
           state: ns,
           steps: [...steps, { kind: 'ORB', key: el }],
-          cost: cost + COST_BIG * COST_BIG + adjDelta * COST_BIG,
+          cost: { ...cost, primary: cost.primary + 1, secondary: cost.secondary + adjDelta },
         })
       }
     }
@@ -254,18 +278,22 @@ export function solveCombo(
           slots: newSlots,
           pendingInvoke: invoked,
           prevOrb: null, // R 重置分组上下文
+          cumulativeOrbs: current.cumulativeOrbs,
         }
         pushHeap({
           state: ns,
           steps: [...steps, { kind: 'INVOKE', key: 'R', spell: invoked }],
-          cost: cost + recipeMismatchDelta(current.orbs, invoked),
+          cost: { ...cost, tertiary: cost.tertiary + recipeMismatchDelta(current.orbs, invoked) },
         })
       }
     }
 
     // ── 转移3:释放当前目标技能,推进 progress ───────────────────
-    // 代价:三级均 +0。释放键:DOTA2 时按 D/F(槽位索引);LEGACY 时按专属键。
+    // 代价:primary/secondary2/secondary 均不变。tertiary 不变。
+    // 释放键:DOTA2 时按 D/F(槽位索引);LEGACY 时按专属键。
     // 释放后清空 pendingInvoke,允许继续切球。
+    // **快照累计切球数**:释放第 progress 个技能时,把当前 primary(总切球数)
+    // 追加到 cumulativeOrbs,供"累计切球字典序"裁决(越早少切越好)。
     const slotIdx = current.slots.indexOf(nextTarget)
     if (slotIdx !== -1) {
       const castKey: Key =
@@ -280,11 +308,12 @@ export function solveCombo(
         slots: current.slots,
         pendingInvoke: null,
         prevOrb: null, // CAST 重置分组上下文
+        cumulativeOrbs: [...current.cumulativeOrbs, cost.primary],
       }
       pushHeap({
         state: ns,
         steps: [...steps, { kind: 'CAST', key: castKey, spell: nextTarget }],
-        cost, // 三级均 +0
+        cost: { ...cost, cumOrbs: ns.cumulativeOrbs },
       })
     }
   }
