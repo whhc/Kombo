@@ -11,7 +11,7 @@ import { evaluateSession } from '../domain/evaluator'
 import { resolveComboName } from '../domain/resolveComboName'
 import { solveCombo } from '../domain/solver'
 import type { TargetCombo, SpellName, SessionMetrics } from '../domain/types'
-import { saveSession, localStorageSessionBackend } from '../domain/sessionStore'
+import { saveSession, storeSessionBackend } from '../domain/sessionStore'
 import { spellName as spellNameFn } from '../domain/i18n'
 import { playSpellSound, playInvokeSound, playKillSound } from '../sound/soundManager'
 import { StreakTracker } from '../domain/streakTracker'
@@ -117,7 +117,7 @@ export function PlayZone({ combo, scheme, iconTheme, locale, t, onQuit, showOpti
     const result = finishSession(session, combo, now)
     const metrics = evaluateSession(result, combo, scheme)
     const withMetrics = { ...result, metrics }
-    saveSession(localStorageSessionBackend, withMetrics)
+    saveSession(storeSessionBackend, withMetrics)
     setFinished({ status: result.status, metrics })
     // 完成态停表(冻结在 evaluator 的精确 durationMs 上)
     stopTimer()

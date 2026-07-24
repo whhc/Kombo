@@ -1,9 +1,9 @@
 import type { TargetCombo } from './types'
+import { getSync, setSync, removeSync } from './storeBackend'
 
 /**
- * 连招持久化后端抽象(doc.md §5.3)。
- * v1 用 localStorage(数据量小、同步 API 简单);ExecutionSession 落盘
- * 后续按需引入 IndexedDB。此抽象便于测试注入内存后端。
+ * 连招持久化后端抽象。
+ * 生产环境用 StoreBackend(tauri-plugin-store 内存缓存层);测试注入 localStorage/内存后端。
  */
 export interface ComboStorage {
   getItem(k: string): string | null
@@ -13,11 +13,18 @@ export interface ComboStorage {
 
 const KEY = 'kombo.combos'
 
-/** localStorage 单例后端(浏览器环境) */
+/** localStorage 单例后端(浏览器环境/测试用) */
 export const localStorageBackend: ComboStorage = {
   getItem: (k) => localStorage.getItem(k),
   setItem: (k, v) => localStorage.setItem(k, v),
   removeItem: (k) => localStorage.removeItem(k),
+}
+
+/** 生产后端:走 StoreBackend(同步内存 + 异步落盘到 tauri-plugin-store) */
+export const storeBackend: ComboStorage = {
+  getItem: (k) => getSync(k),
+  setItem: (k, v) => setSync(k, v),
+  removeItem: (k) => removeSync(k),
 }
 
 /** 读取所有连招;损坏数据返回空数组 */

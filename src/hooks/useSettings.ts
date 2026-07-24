@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react'
 import { DEFAULT_SETTINGS, effectiveScheme, type UserSettings } from '../domain/settings'
+import { getSync, setSync } from '../domain/storeBackend'
 
 const STORAGE_KEY = 'kombo.settings'
 
 function load(): UserSettings {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = getSync(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<UserSettings>
       return {
@@ -22,10 +23,10 @@ function load(): UserSettings {
   return DEFAULT_SETTINGS
 }
 
-/** 同步写入,避免 Tauri 退出时 effect 未 flush 导致设置丢失 */
+/** 同步写入 StoreBackend(内存 + 异步落盘) */
 function save(s: UserSettings): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
+    setSync(STORAGE_KEY, JSON.stringify(s))
   } catch {
     // 忽略
   }

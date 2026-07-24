@@ -10,7 +10,9 @@ import { useCombos } from './hooks/useCombos'
 import { useSessions } from './hooks/useSessions'
 import { useLocale } from './hooks/useLocale'
 import { preloadSounds } from './sound/soundManager'
-import { Settings } from 'lucide-react'
+import { useUpdater } from './hooks/useUpdater'
+import { initStoreBackend } from './domain/storeBackend'
+import { Settings, Download } from 'lucide-react'
 
 type View = 'practice' | 'combos' | 'dashboard' | 'help'
 
@@ -19,11 +21,33 @@ function App() {
   const { combos, addOrUpdate, remove } = useCombos()
   const { sessions, refresh } = useSessions()
   const { locale, toggle, t } = useLocale()
+  const { update, installing, applyUpdate, dismiss } = useUpdater()
   const [view, setView] = useState<View>('practice')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // 非 Tauri 环境(测试/纯前端 dev)无需等待 store 初始化,getSync 已降级 localStorage
+  const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+  const [storeReady, setStoreReady] = useState(!isTauri)
 
-  // 挂载时预加载全部音效(浏览器提前解码,避免首次播放延迟)
-  useEffect(() => preloadSounds(), [])
+  // 启动时:初始化存储后端(加载 tauri-plugin-store 到内存缓存)+ 预加载音效
+  useEffect(() => {
+    if (isTauri) {
+      let cancelled = false
+      initStoreBackend().finally(() => {
+        if (!cancelled) setStoreReady(true)
+      })
+      return () => { cancelled = true }
+    }
+    preloadSounds()
+  }, [isTauri])
+
+  // Tauri 环境下 store 未就绪时显示 loading(避免空数据闪烁)
+  if (!storeReady) {
+    return (
+      <div className="h-full w-full bg-neutral-950 text-neutral-100 flex items-center justify-center">
+        <span className="text-neutral-500 text-sm">Kombo</span>
+      </div>
+    )
+  }
 
   return (
     <div className="h-full w-full bg-neutral-950 text-neutral-100 flex flex-col">
@@ -117,6 +141,33 @@ function App() {
           {view === 'help' && <Help iconTheme={settings.iconTheme} locale={locale} t={t} />}
         </div>
       </main>
+
+      {/* 更新提示浮层(有新版本时显示) */}
+      {update && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-xs p-3 rounded-lg bg-neutral-900 border border-sky-500/40 shadow-xl shadow-black/40 flex flex-col gap-2 text-sm">
+          <div className="flex items-center gap-2 text-sky-300">
+            <Download size={14} />
+            <span className="font-medium">{t('updater.available')}: v{update.version}</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="flex-1 px-2 py-1 text-xs rounded bg-sky-600 hover:bg-sky-500 disabled:opacity-50"
+              onClick={applyUpdate}
+              disabled={installing}
+            >
+              {installing ? t('updater.installing') : t('updater.install')}
+            </button>
+            <button
+              type="button"
+              className="px-2 py-1 text-xs rounded border border-white/20 hover:bg-white/10"
+              onClick={dismiss}
+            >
+              {t('updater.later')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

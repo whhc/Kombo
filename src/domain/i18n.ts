@@ -54,6 +54,11 @@ const UI_ZH: Dict = {
   'practice.recipeToggle': '显示/隐藏技能配方',
   'recipe.title': '技能配方',
 
+  'updater.available': '发现新版本',
+  'updater.install': '立即更新',
+  'updater.installing': '安装中…',
+  'updater.later': '稍后',
+
   'combo.library': '连招库',
   'combo.new': '新建连招',
   'combo.name': '连招名称',
@@ -186,6 +191,11 @@ const UI_EN: Dict = {
   'practice.spellHistory': 'Spell history',
   'practice.recipeToggle': 'Show/hide spell recipes',
   'recipe.title': 'Spell Recipes',
+
+  'updater.available': 'New version available',
+  'updater.install': 'Update now',
+  'updater.installing': 'Installing…',
+  'updater.later': 'Later',
 
   'combo.library': 'Combo Library',
   'combo.new': 'New combo',

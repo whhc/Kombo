@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { DEFAULT_LOCALE, LOCALES, t, type Locale } from '../domain/i18n'
+import { getSync, setSync } from '../domain/storeBackend'
 
 const STORAGE_KEY = 'kombo.locale'
 
@@ -24,7 +25,7 @@ function detectSystemLocale(): Locale {
 
 function load(): Locale {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = getSync(STORAGE_KEY)
     if (raw === 'zh' || raw === 'en') return raw
   } catch {
     // 忽略
@@ -35,7 +36,7 @@ function load(): Locale {
 
 function save(l: Locale): void {
   try {
-    localStorage.setItem(STORAGE_KEY, l)
+    setSync(STORAGE_KEY, l)
   } catch {
     // 忽略
   }

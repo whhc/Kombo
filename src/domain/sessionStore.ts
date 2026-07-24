@@ -1,8 +1,9 @@
 import type { ExecutionSession } from './types'
+import { getSync, setSync } from './storeBackend'
 
 /**
- * 会话历史持久化(doc.md §5.3)。
- * v1 用 localStorage;若数据量增长,后续切 IndexedDB。
+ * 会话历史持久化。
+ * 生产环境用 StoreBackend(tauri-plugin-store 内存缓存层);测试注入 localStorage 后端。
  */
 const KEY = 'kombo.sessions'
 
@@ -14,6 +15,12 @@ export interface SessionStorage {
 export const localStorageSessionBackend: SessionStorage = {
   getItem: (k) => localStorage.getItem(k),
   setItem: (k, v) => localStorage.setItem(k, v),
+}
+
+/** 生产后端:走 StoreBackend(同步内存 + 异步落盘到 tauri-plugin-store) */
+export const storeSessionBackend: SessionStorage = {
+  getItem: (k) => getSync(k),
+  setItem: (k, v) => setSync(k, v),
 }
 
 export function listSessions(store: SessionStorage): ExecutionSession[] {

@@ -13,6 +13,7 @@ vi.mock('../sound/soundManager', () => ({
 // 拦截 sessionStore:验证 Esc 不存盘
 vi.mock('../domain/sessionStore', () => ({
   saveSession: vi.fn(),
+  storeSessionBackend: {},
   localStorageSessionBackend: {},
 }))
 import { playSpellSound, playInvokeSound, playKillSound } from '../sound/soundManager'

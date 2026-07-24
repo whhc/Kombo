@@ -1,9 +1,16 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import * as echarts from 'echarts'
+import * as echarts from 'echarts/core'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import { SVGRenderer } from 'echarts/renderers'
 import type { ExecutionSession, TargetCombo } from '../domain/types'
 import { resolveComboName } from '../domain/resolveComboName'
 import type { Locale } from '../domain/i18n'
 import type { IconTheme } from '../domain/icons'
+
+// 按需注册:只用 LineChart + Grid/Tooltip/Legend 组件 + SVG 渲染器
+// (相比全量 import 'echarts',bundle 减少约 1MB)
+echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, SVGRenderer])
 
 interface Props {
   sessions: ExecutionSession[]
